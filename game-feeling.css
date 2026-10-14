@@ -1,0 +1,36 @@
+
+/* Camada visual Game Feeling — não altera regras do duelo */
+.card,.minion{will-change:transform;transform-origin:center bottom}
+.card{transition:transform .22s cubic-bezier(.2,.8,.2,1),filter .2s,box-shadow .2s}
+.card:hover{transform:translateY(-20px) scale(1.085) rotate(-1.5deg);box-shadow:0 20px 30px #000b,0 0 19px #f6c65a66;filter:brightness(1.13);z-index:8}
+.card::before{content:"";position:absolute;inset:-50%;z-index:3;pointer-events:none;background:linear-gradient(115deg,transparent 36%,#ffffff00 42%,#ffffff75 50%,#ffffff00 58%,transparent 65%);transform:translateX(-110%) rotate(8deg);transition:transform .55s ease}
+.card:hover::before{transform:translateX(110%) rotate(8deg)}
+.card.selected{box-shadow:0 0 22px #ffe18b99}
+.minion{transition:transform .2s ease,filter .2s ease,box-shadow .2s ease}
+.minion:hover{transform:translateY(-7px) scale(1.065);filter:brightness(1.12)}
+.minion.ready{animation:gf-ready 2.8s ease-in-out infinite}
+.minion.gf-summon{animation:gf-summon .55s cubic-bezier(.2,1.4,.4,1) both}
+.minion.gf-hit,.hero-card.gf-hit{animation:gf-hit .38s ease}
+.minion.gf-strike{animation:gf-strike .38s ease}
+.hero-card{transition:box-shadow .2s,filter .2s}
+.hero-card.gf-hit{box-shadow:0 0 30px #ff6666a8}
+#gf-tooltip{position:fixed;z-index:100;pointer-events:none;width:min(285px,calc(100vw - 24px));padding:12px;background:linear-gradient(150deg,#2c3941,#111920);border:2px solid #e0bd68;border-radius:11px;box-shadow:0 16px 42px #000c,0 0 22px #e7b95433;color:#f7eedc;opacity:0;transform:translateY(8px);transition:opacity .12s,transform .12s}
+#gf-tooltip.gf-visible{opacity:1;transform:translateY(0)}
+.gf-tooltip-top{display:flex;gap:10px;align-items:center}
+.gf-tooltip-art{width:68px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #b89a5d}
+.gf-tooltip-name{font:800 20px 'Barlow Condensed',sans-serif;color:#f6d478}
+.gf-tooltip-kind{font-size:10px;letter-spacing:1px;color:#a8d9ed;margin-top:4px}
+.gf-tooltip-desc{font-size:12px;line-height:1.55;margin-top:10px;color:#e0e5e3}
+.gf-tooltip-stats{margin-top:9px;padding-top:8px;border-top:1px solid #ffffff25;color:#f5d57f;font-size:12px;font-weight:800}
+#gf-banner{position:fixed;top:27%;left:50%;z-index:90;pointer-events:none;max-width:90vw;text-align:center;padding:16px 34px;background:linear-gradient(90deg,transparent,#13242deb 15%,#13242deb 85%,transparent);border-top:2px solid #f5cf6e;border-bottom:2px solid #f5cf6e;box-shadow:0 12px 35px #0009;opacity:0;transform:translate(-50%,-25px) scale(.93);transition:opacity .22s,transform .22s}
+#gf-banner.gf-visible{opacity:1;transform:translate(-50%,0) scale(1)}
+#gf-banner strong{display:block;font:800 clamp(24px,4vw,43px) 'Barlow Condensed',sans-serif;letter-spacing:3px;color:#ffe08b;text-shadow:0 3px 6px #000}
+#gf-banner small{display:block;font-size:11px;letter-spacing:1.4px;color:#e2e8e8;margin-top:4px}
+.gf-float{position:fixed;z-index:95;pointer-events:none;color:#ffdf7b;font:900 26px 'Barlow Condensed',sans-serif;text-shadow:0 3px 8px #000,0 0 10px #ff6a42;animation:gf-float .85s ease-out forwards}
+@keyframes gf-ready{0%,100%{box-shadow:0 0 0 1px #7bd7ef55,0 4px 12px #0007}50%{box-shadow:0 0 16px #7bd7efaa,0 4px 12px #0007}}
+@keyframes gf-summon{0%{opacity:0;transform:translateY(-28px) scale(.45);filter:brightness(2)}65%{opacity:1;transform:translateY(5px) scale(1.12)}100%{transform:translateY(0) scale(1);filter:brightness(1)}}
+@keyframes gf-hit{0%,100%{transform:translateX(0);filter:brightness(1)}20%,60%{transform:translateX(-7px);filter:brightness(1.8) sepia(.5)}40%,80%{transform:translateX(7px)}}
+@keyframes gf-strike{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-18px) scale(1.13);filter:brightness(1.5)}}
+@keyframes gf-float{0%{opacity:0;transform:translateY(12px) scale(.8)}20%{opacity:1}100%{opacity:0;transform:translateY(-48px) scale(1.2)}}
+@media(hover:none){.card:hover{transform:none}.card:hover::before{transform:translateX(-110%)}}
+@media(prefers-reduced-motion:reduce){.card,.minion,#gf-tooltip,#gf-banner{transition:none!important;animation:none!important}.gf-float{animation:none;display:none}}

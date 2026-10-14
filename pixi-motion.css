@@ -1,0 +1,41 @@
+/* Breads vs Aliens — PixiJS motion system */
+#pixi-effects,#tcg-overlay{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+#pixi-effects{z-index:85}#pixi-effects canvas{display:block;pointer-events:none}
+#tcg-overlay{z-index:90}
+body{background-image:radial-gradient(ellipse at 50% 44%,#294b57 0%,#13232c 42%,#0c111a 86%)}
+.battlefield{background:radial-gradient(ellipse at 50% 55%,#40635c3a,transparent 68%),linear-gradient(135deg,#203e45aa,#0e242dca);border:1px solid #a8d2c64a;border-radius:20px;box-shadow:inset 0 0 65px #0008,0 16px 50px #0006;position:relative}
+.battlefield:before{content:"";position:absolute;inset:8px;border:1px solid #d4c68d30;border-radius:14px;pointer-events:none}
+.minion{transition:filter .25s,box-shadow .25s,border-color .25s;cursor:grab}
+.minion.ready{box-shadow:0 0 22px #6be9ff70,0 0 6px #f8da7b}
+.card{cursor:grab;transition:transform .26s cubic-bezier(.2,.8,.2,1),filter .24s,box-shadow .24s}
+.card:hover{transform:translateY(-24px) scale(1.11);z-index:10;filter:brightness(1.2);box-shadow:0 20px 36px #000a,0 0 24px #ffe59c70}
+.tcg-drag-card{position:fixed;transform:translate(-50%,-50%) rotate(-5deg) scale(1.15);width:106px;height:135px;border:3px solid #ffdc85;border-radius:12px;background:#1c2b33;box-shadow:0 0 35px #ffca6d,0 16px 30px #000a;overflow:hidden}
+.tcg-drag-card img{width:100%;height:100%;object-fit:cover}
+.tcg-drag-source{opacity:.35!important}
+.tcg-drop-target{outline:3px solid #ffda80!important;filter:brightness(1.35)}
+.tcg-legal-target{outline:3px solid #8bf4cb!important;box-shadow:0 0 22px #6afcc5a1!important;cursor:crosshair}
+.tcg-taunt{border:3px solid #f8cc74!important;box-shadow:0 0 0 3px #896a38,0 0 24px #ffcc7088!important}
+.tcg-taunt .taunt{font-size:9px;font-weight:900;letter-spacing:1px;background:#9a6c20;color:#fff2c0}
+.hero-card{transition:box-shadow .3s,border-color .3s;position:relative}
+.hero-card#enemy-hero{cursor:crosshair}
+.hero-card#enemy-hero:hover{border-color:#e9c76d;box-shadow:0 0 22px #f2c96955}
+.tcg-in-flight{filter:brightness(.55)!important}
+.tcg-arrival{animation:tcg-arrival 1s cubic-bezier(.15,1,.25,1)!important}
+.tcg-impact{animation:tcg-impact .85s ease!important}
+.tcg-hero-impact{animation:tcg-hero-impact 1s ease!important;border-color:#ff675c!important;box-shadow:0 0 30px #ff4433b8,0 0 65px #ff442266!important}
+.tcg-hero-impact .hero-portrait{animation:tcg-portrait 1s ease!important}
+.tcg-banner{position:absolute;left:50%;top:24%;transform:translate(-50%,-45px) scale(.85);opacity:0;min-width:min(590px,90vw);padding:22px 32px;text-align:center;background:linear-gradient(90deg,transparent,#101c2bf2 13%,#101c2bf2 87%,transparent);border-top:2px solid #f7d887;border-bottom:2px solid #f7d887;box-shadow:0 14px 50px #0009;transition:transform .45s cubic-bezier(.2,1,.3,1),opacity .35s}
+.tcg-banner.visible{opacity:1;transform:translate(-50%,0) scale(1)}
+.tcg-banner strong{display:block;font:800 clamp(30px,5vw,55px) 'Barlow Condensed',sans-serif;letter-spacing:3px;color:#ffe0a1;text-shadow:0 3px 12px #000}
+.tcg-banner small{display:block;margin-top:6px;font:700 12px Inter,sans-serif;letter-spacing:1.6px;color:#e6e9ee}
+.tcg-damage{position:absolute;font:900 58px 'Barlow Condensed',sans-serif;color:#ff685b;text-shadow:0 4px 4px #000,0 0 18px #ff3322;animation:tcg-damage 1.4s ease-out forwards}
+.tcg-damage.healing{color:#8bffc9}
+.tcg-particle{position:absolute;width:7px;height:7px;border-radius:50%;background:#ffc778;box-shadow:0 0 10px #ff7d33;animation:tcg-particle .85s ease-out forwards}
+@keyframes tcg-arrival{0%{opacity:0;transform:translateY(-55px) scale(.45);filter:brightness(3)}60%{opacity:1;transform:translateY(9px) scale(1.16)}100%{transform:translateY(0) scale(1)}}
+@keyframes tcg-impact{0%,100%{transform:translateX(0);filter:brightness(1)}18%,55%{transform:translateX(-10px);filter:brightness(2)}36%,72%{transform:translateX(10px)}}
+@keyframes tcg-hero-impact{0%,100%{transform:translateX(0)}15%,45%,75%{transform:translateX(-14px)}30%,60%{transform:translateX(14px)}}
+@keyframes tcg-portrait{0%,100%{transform:rotate(0) scale(1)}25%{transform:rotate(-15deg) scale(1.22);filter:brightness(2.3)}55%{transform:rotate(12deg) scale(.9)}}
+@keyframes tcg-damage{0%{transform:translate(-50%,0) scale(.5);opacity:0}20%{transform:translate(-50%,-20px) scale(1.3);opacity:1}100%{transform:translate(-50%,-115px) scale(1);opacity:0}}
+@keyframes tcg-particle{0%{transform:translate(0,0) scale(.5);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(.1);opacity:0}}
+@media(max-width:800px){.tcg-banner{padding:14px 18px;min-width:80vw}.tcg-banner strong{font-size:28px}.tcg-drag-card{width:80px;height:104px}}
+@media(prefers-reduced-motion:reduce){.tcg-banner,.tcg-damage,.tcg-particle,.tcg-arrival,.tcg-impact,.tcg-hero-impact{animation:none!important;transition:none!important}}

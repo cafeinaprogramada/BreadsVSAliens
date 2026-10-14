@@ -41,3 +41,18 @@ body{background-image:radial-gradient(ellipse at 50% 44%,#294b57 0%,#13232c 42%,
 @media(prefers-reduced-motion:reduce){.tcg-banner,.tcg-damage,.tcg-particle,.tcg-arrival,.tcg-impact,.tcg-hero-impact{animation:none!important;transition:none!important}}
 
 #tcg-rule-tip{position:fixed;z-index:110;pointer-events:none;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;width:300px;max-width:calc(100vw - 16px);padding:14px 16px;border-radius:9px;border:2px solid #f6cc72;background:linear-gradient(145deg,#273c45,#101c27);color:#fff1ce;box-shadow:0 12px 30px #000b;font:600 12px/1.6 Inter,sans-serif}#tcg-rule-tip.visible{opacity:1;transform:translateY(0)}
+
+/* Motion 0.4 — enemy deck, stronger particles, cinematic readable announcements */
+.enemy-deck-zone{display:flex;align-items:center;gap:10px;flex:1;min-width:210px;justify-content:center;position:relative}
+.enemy-card-stack{width:76px;height:98px;border-radius:10px;border:3px solid #e7c97d;background:repeating-linear-gradient(45deg,#192e42,#192e42 8px,#294761 8px,#294761 14px);box-shadow:5px 5px 0 #182735,9px 9px 0 #253b4b,0 0 22px #69a4dc66;display:flex;align-items:center;justify-content:center;flex-direction:column;transform:rotate(7deg);flex-shrink:0}
+.deck-symbol{font-size:33px;color:#f4dc9b;text-shadow:0 0 14px #f5bf59}.enemy-card-stack small{font:800 7px Inter,sans-serif;color:#f5e2b3;letter-spacing:.5px}
+.enemy-hand-backs{display:flex;align-items:center;justify-content:center;margin-left:5px;min-height:84px}
+.enemy-card-back{height:75px;width:48px;margin-left:-23px;display:grid;place-items:center;background:linear-gradient(145deg,#3c6682,#1c304c);border:2px solid #e6c67a;border-radius:7px;box-shadow:0 5px 12px #0009,0 0 7px #b2d5ff66;color:#f7dc98;font-size:24px;transform:rotate(calc((var(--n,0) - 2)*4deg));transition:transform .35s}
+.enemy-card-back:first-child{margin-left:0}.enemy-card-back:hover{transform:translateY(-7px) rotate(3deg)}
+#enemy-hand-number{font:800 9px Inter,sans-serif;letter-spacing:.8px;color:#a7c9d8;white-space:nowrap}
+.tcg-moving-card{position:fixed;z-index:95;pointer-events:none;border:3px solid #f7d98b;border-radius:10px;object-fit:cover;box-shadow:0 0 34px #ffd17b,0 15px 36px #000c;filter:brightness(1.18)}
+.tcg-banner{z-index:98;transition:transform .65s cubic-bezier(.2,1,.25,1),opacity .65s ease!important;box-shadow:0 0 38px #e5b9693a,0 16px 60px #000b!important}
+.tcg-particle{width:9px;height:9px;box-shadow:0 0 15px #ff9e48}
+.hero-row.enemy{flex-wrap:wrap;row-gap:15px}
+@media(max-width:1000px){.enemy-deck-zone{order:3;width:100%;flex-basis:100%;justify-content:center}.enemy-card-stack{width:56px;height:74px}.enemy-card-back{width:37px;height:57px}}
+@media(max-width:600px){.enemy-deck-zone{gap:8px}.enemy-card-stack{width:46px;height:62px}.enemy-card-stack small{font-size:5px}.enemy-card-back{width:32px;height:49px;margin-left:-15px}#enemy-hand-number{font-size:7px}}

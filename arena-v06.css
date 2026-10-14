@@ -1,0 +1,56 @@
+/* v0.6 layout hotfix — independent stylesheet prevents stale cached v0.5 rules */
+.table{width:100%;max-width:1390px;margin:0 auto}
+.duel-layout{display:grid!important;grid-template-columns:220px minmax(0,1fr) 132px!important;gap:16px!important;align-items:start;width:100%}
+.duel-layout>.inspect-panel{grid-column:1;grid-row:1;position:sticky;top:15px;width:100%;min-height:345px;max-height:calc(100vh - 70px);overflow:auto;background:linear-gradient(150deg,#263c44,#111e29);border:1px solid #9bb3b480;border-radius:16px;padding:15px;box-shadow:0 12px 32px #0006}
+.duel-layout>.arena-main{grid-column:2;grid-row:1;min-width:0;max-width:100%;display:flex;flex-direction:column;align-items:stretch}
+.duel-layout>.arena-rail{grid-column:3;grid-row:1;display:flex!important;flex-direction:column;align-items:center;justify-content:space-between;min-height:560px;padding:65px 0 0;gap:20px}
+.inspect-heading{font:800 15px 'Barlow Condensed',sans-serif;letter-spacing:1px;color:#f6d17d;border-bottom:1px solid #ffffff35;padding-bottom:9px}
+.card-inspect{min-height:235px;padding-top:10px;display:flex;align-items:center;flex-direction:column;text-align:center;gap:8px;opacity:.8;transition:opacity .2s,transform .2s}
+.card-inspect.inspect-visible{opacity:1;animation:inspector-in .25s ease-out}
+@keyframes inspector-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card-inspect img{max-width:100%;width:160px;height:178px;object-fit:contain;border:2px solid #e3c980;border-radius:8px;box-shadow:0 8px 20px #000a}
+.card-inspect strong{font:800 20px 'Barlow Condensed',sans-serif;color:#ffe39b}
+.card-inspect small{font:800 11px Inter,sans-serif;color:#9ddaf5}
+.card-inspect em{font-size:10px;font-weight:900;font-style:normal;letter-spacing:.8px;color:#d8a9ff}
+.card-inspect p{font:500 12px/1.6 Inter,sans-serif;color:#d8e4e9;margin:0}
+.inspect-placeholder{font:500 12px/1.7 Inter,sans-serif;color:#aebec9;padding:26px 4px}
+.inspect-foot{margin-top:14px;padding-top:12px;border-top:1px solid #ffffff28;font-size:10px;color:#99adb8;line-height:1.5}
+.arena-main .hero-row{display:flex!important;align-items:center!important;justify-content:center!important;flex-direction:column!important;gap:0}
+.arena-main .hero-row.enemy{flex-wrap:nowrap!important}
+.arena-main .hero-card{width:auto!important;min-width:0!important;max-width:100%;display:flex;align-items:center;gap:9px;border-radius:48px!important;padding:7px 12px!important;background:linear-gradient(120deg,#263842,#121e2a);border:1px solid #b5a67b;box-shadow:0 6px 17px #0007}
+.arena-main .hero-portrait{width:46px!important;height:46px!important;flex-shrink:0;display:grid;place-items:center;border-radius:50%!important;border:2px solid #e2c775;font-size:25px!important}
+.arena-main .hero-info{flex:0 1 auto;max-width:155px}
+.arena-main .hero-info b{font-size:14px}
+.arena-main .hero-info span{font-size:9px}
+.arena-main .health{display:flex;align-items:center;justify-content:center;width:57px;min-width:57px;height:48px;gap:2px;background:transparent!important;border:0!important;box-shadow:none!important;position:relative;padding:0!important}
+.arena-main .health::before{content:'♥';position:absolute;inset:-12px 0 0;display:grid;place-items:center;font-size:69px;color:#b52f48;filter:drop-shadow(0 1px 1px #ffacac) drop-shadow(0 3px 5px #0008);line-height:1;z-index:0}
+.arena-main .health span{display:none!important}
+.arena-main .health strong{z-index:1;position:relative;color:white;font:900 21px 'Barlow Condensed',sans-serif;text-shadow:0 2px 3px #000;transform:translateY(2px)}
+.arena-main .heart-meter{position:absolute;left:67px;right:72px;bottom:-6px;height:5px;background:#321b24;border:1px solid #de8d91;border-radius:8px;overflow:hidden}
+.arena-main .heart-meter-fill{width:100%;height:100%;background:linear-gradient(90deg,#d74657,#ffafa8);transition:width .35s}
+.arena-main .heart-meter-label{display:none!important}
+.arena-main .hero-mana{right:15px;bottom:-16px}
+.enemy-hand-display{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:22px 0 0;min-height:88px}
+.enemy-hand-display .enemy-hand-backs{display:flex;justify-content:center;min-height:60px}
+.enemy-hand-display .enemy-card-back{height:62px;width:43px}
+.enemy-hand-display #enemy-hand-number{font-size:9px;letter-spacing:.8px}
+.arena-main .battlefield{width:100%;margin:13px 0 15px;min-height:285px;padding:11px 12px}
+.arena-main .board{min-height:112px}
+.arena-main .hero-row.player{margin-top:5px}
+.arena-main .player-help{display:flex;align-items:center;text-align:center;margin-top:18px;max-width:100%;gap:3px}
+.arena-main .player-help b{font-size:15px}
+.arena-main .player-help span{font-size:10px}
+.arena-main .hand-area{width:100%;margin-top:11px;padding-top:9px;min-width:0}
+.arena-main .hand{display:flex;flex-wrap:nowrap;justify-content:center;overflow-x:auto;gap:8px;min-height:155px;max-width:100%;padding:10px 5px 12px}
+.arena-main .hand .card{flex:0 0 93px;min-width:75px;max-width:none;width:93px;height:134px}
+.arena-main .hand:has(.card:nth-child(7)){justify-content:flex-start}
+.arena-rail .rail-deck{width:100%;display:flex;align-items:center;flex-direction:column;gap:12px;color:#cbdce5;font:800 11px Inter,sans-serif}
+.arena-rail .enemy-card-stack,.arena-rail .player-card-stack{width:83px!important;height:108px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:3px solid #d9bc79;border-radius:10px;background:repeating-linear-gradient(45deg,#1a3046,#1a3046 8px,#294961 8px,#294961 14px);box-shadow:5px 5px 0 #142333,8px 8px 0 #253c4d;transform:rotate(5deg)}
+.arena-rail .player-card-stack{background:repeating-linear-gradient(45deg,#503f2c,#503f2c 8px,#806239 8px,#806239 14px);transform:rotate(-5deg)}
+.arena-rail .rail-deck small{font:800 8px Inter,sans-serif;color:#ffe2aa;text-align:center}
+.arena-rail .rail-deck>span{padding:5px 12px;border:1px solid #a98d55;border-radius:12px;background:#162632}
+.arena-rail .rail-turn{display:flex;align-items:center;flex-direction:column;gap:12px;width:100%}
+.arena-rail #end-turn{width:100%;display:block;white-space:normal;font-size:10px;padding:13px 7px;border-radius:12px;line-height:1.4}
+.arena-rail .rail-ai{font-size:10px;line-height:1.5;color:#a6c1c9;text-align:center}
+@media(max-width:1050px){.duel-layout{grid-template-columns:170px minmax(0,1fr) 105px!important;gap:9px!important}.arena-main .hero-info span{display:none}.arena-main .hero-info b{font-size:12px}.arena-rail .enemy-card-stack,.arena-rail .player-card-stack{width:70px!important;height:90px!important}.arena-main .hand .card{flex-basis:80px;width:80px;height:119px}}
+@media(max-width:740px){.duel-layout{grid-template-columns:minmax(0,1fr) 85px!important;gap:7px!important}.duel-layout>.inspect-panel{grid-column:1/-1;grid-row:1;position:static;min-height:0;max-height:none;padding:9px}.duel-layout>.arena-main{grid-column:1;grid-row:2}.duel-layout>.arena-rail{grid-column:2;grid-row:2;min-height:440px;padding-top:45px}.card-inspect{min-height:0;display:grid;grid-template-columns:64px 1fr;gap:3px 10px;text-align:left}.card-inspect img{width:64px;height:74px;grid-row:1/5}.card-inspect strong{font-size:15px}.card-inspect p{font-size:10px}.inspect-placeholder{padding:4px}.inspect-foot{display:none}.arena-main .hero-portrait{width:35px!important;height:35px!important;font-size:19px!important}.arena-main .hero-info b{font-size:10px}.arena-main .health{width:40px;min-width:40px;height:36px}.arena-main .health::before{font-size:52px;inset:-8px 0 0}.arena-main .health strong{font-size:16px}.arena-main .hero-card{padding:5px 7px!important;gap:5px}.arena-main .heart-meter{left:49px;right:50px}.arena-main .hero-mana{font-size:7px}.arena-main .board{min-height:85px}.arena-main .battlefield{padding:10px 6px}.arena-main .minion{width:clamp(38px,10vw,67px);height:76px}.arena-main .hand .card{flex-basis:74px;width:74px;height:112px}.arena-rail .enemy-card-stack,.arena-rail .player-card-stack{width:58px!important;height:75px!important}.arena-rail #end-turn{font-size:8px;padding:10px 4px}.arena-rail .rail-ai{font-size:8px}}

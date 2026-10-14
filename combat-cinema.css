@@ -1,0 +1,31 @@
+
+/* Combat cinema v2: persistent fixed layer independent of board re-renders */
+#cinema-layer{position:fixed;inset:0;z-index:1000;pointer-events:none;overflow:hidden;isolation:isolate}
+.cinema-title{position:absolute;left:50%;top:27%;width:min(670px,94vw);padding:24px 30px;text-align:center;transform:translate(-50%,-35px) scale(.88);opacity:0;transition:transform .45s cubic-bezier(.2,1,.2,1),opacity .35s;background:linear-gradient(90deg,transparent,#101b29f2 12%,#101b29f2 88%,transparent);border-top:2px solid #ffe095;border-bottom:2px solid #ffe095;box-shadow:0 18px 40px #0009}
+.cinema-title.visible{transform:translate(-50%,0) scale(1);opacity:1}
+.cinema-title strong{display:block;font:800 clamp(30px,5vw,58px) 'Barlow Condensed',sans-serif;letter-spacing:3px;color:#ffdf8b;text-shadow:0 4px 12px #000,0 0 20px #f8ae5855}
+.cinema-title small{display:block;margin-top:5px;font-size:12px;font-weight:800;letter-spacing:1.4px;color:#fff}
+.cinema-ghost,.cinema-card-flight{position:fixed!important;z-index:1003!important;pointer-events:none!important;object-fit:cover;border-radius:8px;box-shadow:0 8px 28px #000c,0 0 15px #ffd47966}
+.cinema-ghost.moving{animation:cinema-lunge .9s cubic-bezier(.2,.8,.2,1) forwards}
+.cinema-card-flight{animation:cinema-cardfly 1.05s cubic-bezier(.15,.7,.25,1) forwards}
+.cinema-summon-ghost{animation:cinema-cardfly 1.05s cubic-bezier(.15,.7,.25,1) forwards}
+.cinema-trail{position:fixed;width:16px;height:16px;border-radius:50%;background:#ffe9a6;box-shadow:0 0 18px 12px #ffb348b0,0 0 38px 20px #e76b4255;animation:cinema-travel .7s ease-in forwards}
+.cinema-spark{position:fixed;width:7px;height:7px;border-radius:50%;background:#ffd77d;box-shadow:0 0 8px 3px #ffb951;animation:cinema-particle 1s ease-out var(--delay) forwards}
+.cinema-spark.damage{background:#ff6b54;box-shadow:0 0 9px 3px #ff463e}
+.cinema-spark.heal{background:#65f6c0;box-shadow:0 0 9px 3px #34e9a5}
+.cinema-number{position:fixed;font:900 clamp(32px,5vw,55px) 'Barlow Condensed',sans-serif;text-shadow:0 4px 4px #000,0 0 16px #f33;animation:cinema-number 1.5s ease-out forwards;white-space:nowrap}
+.cinema-number.damage{color:#ff6657}.cinema-number.heal{color:#6affc3;text-shadow:0 4px 4px #000,0 0 16px #3f8}
+.minion.cinema-summon{animation:cinema-summon 1.05s cubic-bezier(.15,1.1,.25,1) both!important}
+.cinema-hit{animation:cinema-shake .85s ease!important;filter:brightness(1.9) saturate(1.3)}
+.hero-card.cinema-hero-hurt{animation:cinema-hero-hurt 1.2s ease!important;border-color:#ff5a56!important;box-shadow:0 0 28px #ff4343,0 0 65px #ff434355!important}
+.hero-portrait.cinema-portrait-hit{animation:cinema-portrait .9s ease!important}
+@keyframes cinema-lunge{0%{transform:translate(0,0) scale(1)}42%{transform:translate(calc(var(--tx)*.86),calc(var(--ty)*.86)) scale(1.2) rotate(-7deg)}68%{transform:translate(var(--tx),var(--ty)) scale(1.08)}100%{transform:translate(0,0) scale(1)}}
+@keyframes cinema-travel{0%{transform:translate(0,0) scale(.6);opacity:0}25%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.8);opacity:0}}
+@keyframes cinema-cardfly{0%{transform:translate(0,0) rotate(-8deg) scale(1);opacity:1}65%{opacity:1}100%{transform:translate(var(--tx),var(--ty)) rotate(0) scale(.8);opacity:0}}
+@keyframes cinema-particle{0%{transform:translate(0,0) scale(.2);opacity:0}18%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.1);opacity:0}}
+@keyframes cinema-number{0%{transform:translate(-50%,0) scale(.6);opacity:0}20%{transform:translate(-50%,-20px) scale(1.3);opacity:1}75%{opacity:1}100%{transform:translate(-50%,-95px) scale(1);opacity:0}}
+@keyframes cinema-summon{0%{transform:translateY(-55px) scale(.35);opacity:0;filter:brightness(3)}60%{transform:translateY(10px) scale(1.15);opacity:1}100%{transform:translateY(0) scale(1);filter:brightness(1)}}
+@keyframes cinema-shake{0%,100%{transform:translateX(0)}15%,45%{transform:translateX(-11px)}30%,60%{transform:translateX(11px)}75%{transform:translateX(-4px)}}
+@keyframes cinema-hero-hurt{0%,100%{transform:translateX(0)}12%,36%,60%{transform:translateX(-11px)}24%,48%,72%{transform:translateX(11px)}}
+@keyframes cinema-portrait{0%,100%{transform:rotate(0) scale(1)}20%{transform:rotate(-18deg) scale(1.2);filter:brightness(2)}50%{transform:rotate(15deg) scale(.85)}75%{transform:rotate(-6deg) scale(1.1)}}
+@media(prefers-reduced-motion:reduce){#cinema-layer *{animation:none!important;transition:none!important}.cinema-title{opacity:1;transform:translate(-50%,0)}}

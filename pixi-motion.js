@@ -176,7 +176,7 @@ document.addEventListener('pointerup',e=>{
  if(d.card){
   const friendly=target?.closest('#player-board .minion'),enemyTarget=target?.closest('#enemy-board .minion');
   const c=allCards[p('player').hand[d.idx]];
-  if(c?.kind==='spell'&&['buff','shield'].includes(c.ability)&&friendly){playCard(d.idx);clickMinion('player',Array.from(document.querySelectorAll('#player-board .minion')).indexOf(friendly));}
+  if(c?.kind==='spell'&&['buff','shield','poisonbuff'].includes(c.ability)&&friendly){playCard(d.idx);clickMinion('player',Array.from(document.querySelectorAll('#player-board .minion')).indexOf(friendly));}
   else if(c?.kind==='spell'&&c.ability==='damage'&&enemyTarget){playCard(d.idx);clickMinion('enemy',Array.from(document.querySelectorAll('#enemy-board .minion')).indexOf(enemyTarget));}
   else if(target?.closest('#player-board,.battlefield,#enemy-board'))playCard(d.idx);
  }else{

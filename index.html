@@ -5,7 +5,7 @@
 <title>Pães vs Aliens — Torre de Batalha</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="game-feeling.css">
-<link rel="stylesheet" href="combat-cinema.css">
+<link rel="stylesheet" href="pixi-motion.css">
 </head>
 <body>
 <div class="app">
@@ -40,10 +40,10 @@
   </section>
   <section class="hand-area"><div class="hand-head"><div><b>SUA MÃO</b><span id="hand-count">3 cartas</span></div><div class="mana-display"><span>✦</span><strong id="mana-text">1 / 1</strong><small>MANA</small><div id="mana-gems" class="gems"></div></div></div><div id="hand" class="hand"></div></section>
 </main>
-<footer><span>BUILD 0.1 · REGRAS PROVISÓRIAS</span><span>As estatísticas serão rebalanceadas com você.</span><span id="log-toggle" tabindex="0">REGISTRO DE COMBATE ▾</span></footer>
+<footer><span>BUILD 0.3 · PIXI MOTION</span><span>As estatísticas serão rebalanceadas com você.</span><span id="log-toggle" tabindex="0">REGISTRO DE COMBATE ▾</span></footer>
 <div id="log" class="combat-log"></div>
 <div id="modal" class="modal hidden"><div class="modal-card"><div class="modal-symbol" id="modal-symbol">🏆</div><h2 id="modal-title">Vitória!</h2><p id="modal-text"></p><button id="modal-restart" class="end-turn">JOGAR NOVAMENTE ↻</button></div></div>
 <div id="toast" class="toast"></div>
 </div>
-<script src="cards-data.js"></script><script src="game.js"></script><script src="game-feeling.js"></script><script src="combat-cinema.js"></script>
+<script src="cards-data.js"></script><script src="game.js"></script><script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.3/dist/pixi.min.js"></script><script src="pixi-motion.js"></script>
 </body></html>

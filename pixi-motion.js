@@ -112,7 +112,7 @@ async function aiAction(choice){
    const description=document.createElement('p');description.textContent=spell.description||'Feitiço alienígena';
    preview.append(image,name,cost,description);
   }
-  await sleep(1300);
+  await sleep(4000);
   executeAI(choice);render();
   if(preview){preview.classList.remove('inspect-visible','enemy-spell-preview');preview.replaceChildren();const placeholder=document.createElement('div');placeholder.className='inspect-placeholder';placeholder.textContent='Passe o cursor sobre uma carta para inspecioná-la.';preview.appendChild(placeholder);}
   enemyPreviewLock=false;

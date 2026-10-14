@@ -2,19 +2,34 @@ const $ = id => document.getElementById(id);
 let allCards={}, state={}, selectedCard=null, selectedAttacker=null, targetMode=null, aiBusy=false, toastTimer=null;
 const rand = arr => arr[Math.floor(Math.random()*arr.length)];
 const shuffle = arr => {for(let i=arr.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;};
+const DECK_SIZE=40,MAX_COPIES=3;
 function buildDeck(faction){
  const pool=window.CARD_DATA.cards.filter(c=>c.faction===faction);
- const budget=24,chosen=[],counts={},spells=pool.filter(c=>c.kind==='spell'),units=pool.filter(c=>c.kind==='unit');
- const add=c=>{if(!c||chosen.length>=budget||counts[c.id]>=2)return false;chosen.push(c.id);counts[c.id]=(counts[c.id]||0)+1;return true;};
- // A guaranteed playable curve: early units, midgame, late-game, and useful spells.
- for(const [lo,hi,n] of [[1,2,8],[3,4,8],[5,10,4]]){
-  const group=shuffle(units.filter(c=>c.cost>=lo&&c.cost<=hi));let k=0,tries=0;
-  while(k<n&&tries++<100&&group.length){if(add(group[(tries-1)%group.length]))k++;}
+ const chosen=[],counts={};
+ const add=c=>{if(!c||chosen.length>=DECK_SIZE||(counts[c.id]||0)>=MAX_COPIES)return false;chosen.push(c.id);counts[c.id]=(counts[c.id]||0)+1;return true;};
+ const bands=[
+  {cards:pool.filter(c=>c.kind==='unit'&&c.cost<=2),count:14},
+  {cards:pool.filter(c=>c.kind==='unit'&&c.cost>=3&&c.cost<=4),count:12},
+  {cards:pool.filter(c=>c.kind==='unit'&&c.cost>=5),count:8},
+  {cards:pool.filter(c=>c.kind==='spell'),count:6}
+ ];
+ for(const band of bands){
+  let n=0,attempts=0;
+  const candidates=shuffle([...band.cards]);
+  while(n<band.count&&attempts++<250&&candidates.length){
+   const options=candidates.filter(c=>(counts[c.id]||0)<MAX_COPIES);
+   if(!options.length)break;
+   if(add(rand(options)))n++;
+  }
  }
- const utility=shuffle(spells.filter(c=>c.ability!=='revive'||chosen.some(id=>allCards[id]?.kind==='unit')));
- for(let i=0;i<Math.min(4,utility.length);i++)add(utility[i]);
- while(chosen.length<budget){const candidates=shuffle(pool.filter(c=>(counts[c.id]||0)<2));if(!candidates.length)break;add(candidates[0]);}
- // Chain cards may generate their follow-up even if it is not in the deck.
+ // Fallback for card pools with too few unique spells or expensive units.
+ let tries=0;
+ while(chosen.length<DECK_SIZE&&tries++<500){
+  const available=pool.filter(c=>(counts[c.id]||0)<MAX_COPIES);
+  if(!available.length)break;
+  const c=rand(available);
+  add(c);
+ }
  return shuffle(chosen);
 }
 function boot(){const data=window.CARD_DATA;allCards=Object.fromEntries(data.cards.map(c=>[c.id,c]));window.deckData=data.decks;startGame();}
@@ -35,9 +50,11 @@ function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clea
 function render(){
  if(!state.players)return;
  $('player-health').textContent=Math.max(0,p('player').health);$('enemy-health').textContent=Math.max(0,p('enemy').health);
+ for(const side of ['player','enemy']){const hp=Math.max(0,p(side).health);const bar=$(side+'-health-fill');if(bar)bar.style.width=Math.max(0,Math.min(100,hp/30*100))+'%';const label=$(side+'-health-label');if(label)label.textContent=hp+' / 30';}
  $('player-mana').textContent=`${p('player').mana} / ${p('player').maxMana} MANA`;$('enemy-mana').textContent=`${p('enemy').mana} / ${p('enemy').maxMana} MANA`;
  $('mana-text').textContent=`${p('player').mana} / ${p('player').maxMana}`;$('hand-count').textContent=`${p('player').hand.length} cartas`;
  $('deck-count').textContent=`DECKS ${p('player').deck.length} / ${p('enemy').deck.length}`;
+ for(const side of ['player','enemy']){const count=$(side+'-deck-number');if(count)count.textContent=p(side).deck.length+' / '+DECK_SIZE;}
  $('enemy-deck-visual')?.replaceChildren(...Array.from({length:Math.min(5,p('enemy').hand.length)},()=>{const el=document.createElement('div');el.className='enemy-card-back';el.textContent='✦';el.title='Carta oculta na mão de Zork';return el;}));
  $('enemy-hand-number')?.replaceChildren(document.createTextNode(p('enemy').hand.length+' CARTAS NA MÃO'));
  $('player-board-count').textContent=`${p('player').board.length} / 7`;$('enemy-board-count').textContent=`${p('enemy').board.length} / 7`;
@@ -51,14 +68,15 @@ function render(){
  $('action-help').textContent=targetMode==='poisonbuff'?'Escolha um Pão para receber Toque Venenoso.':targetMode==='buff'?'Selecione uma criatura aliada.':targetMode==='shield'?'Selecione um aliado para receber Provocar.':targetMode==='damage'?'Selecione uma criatura inimiga para receber 3 de dano.':selectedAttacker!==null?'Clique ou arraste até uma criatura inimiga ou o herói alienígena.':'Jogue cartas, ataque e encerre o turno.';
  $('ai-thought').textContent=state.active==='enemy'?'“Calculando probabilidades de vitória...”':state.lastAction||'“Analisando formas de vida...”';
 }
+function inspectCard(c,u){const preview=$('card-inspect');if(!preview||!c)return;preview.innerHTML='';const img=document.createElement('img');img.src=c.art;img.alt=c.name;const name=document.createElement('strong');name.textContent=c.name;const desc=document.createElement('p');desc.textContent=c.description||'Sem efeito especial.';const stats=document.createElement('small');stats.textContent=c.cost+' MANA · '+(c.kind==='spell'?'FEITIÇO':(u?u.attack:c.attack)+' ATQ / '+(u?u.health:c.health)+' VIDA');preview.append(img,name,stats,desc);}
 function renderHand(){
  const hand=$('hand');hand.innerHTML='';
- p('player').hand.forEach((id,i)=>{const c=allCards[id];if(!c)return;const el=document.createElement('div');el.className='card'+(c.cost>p('player').mana||p('player').board.length>=7&&c.kind==='unit'?' disabled':'')+(selectedCard===i?' selected':'');el.title=`${c.name} · ${c.cost} mana\n${c.description}`;el.innerHTML=`<img src="${c.art}" alt=""><span class="card-cost">${c.cost}</span><span class="kind-mark">${c.kind==='spell'?'FEITIÇO':'CRIATURA'}</span><span class="card-name">${escapeHtml(c.name)}</span>${c.kind==='unit'?`<span class="card-stats"><b class="atk">⚔ ${c.attack}</b><b class="hp">♥ ${c.health}</b></span>`:'<span class="spell-mark">✦ EFEITO ✦</span>'}`;el.onclick=()=>playCard(i);hand.appendChild(el);});
+ p('player').hand.forEach((id,i)=>{const c=allCards[id];if(!c)return;const el=document.createElement('div');el.className='card'+(c.cost>p('player').mana||p('player').board.length>=7&&c.kind==='unit'?' disabled':'')+(selectedCard===i?' selected':'');el.title=`${c.name} · ${c.cost} mana\n${c.description}`;el.innerHTML=`<img src="${c.art}" alt=""><span class="card-cost">${c.cost}</span><span class="kind-mark">${c.kind==='spell'?'FEITIÇO':'CRIATURA'}</span><span class="card-name">${escapeHtml(c.name)}</span>${c.kind==='unit'?`<span class="card-stats"><b class="atk">⚔ ${c.attack}</b><b class="hp">♥ ${c.health}</b></span>`:'<span class="spell-mark">✦ EFEITO ✦</span>'}`;el.onclick=()=>playCard(i);el.addEventListener('pointerenter',()=>inspectCard(c));el.addEventListener('focus',()=>inspectCard(c));hand.appendChild(el);});
 }
 function renderBoard(side){
  const board=$(side==='player'?'player-board':'enemy-board');board.innerHTML='';const units=p(side).board;
  if(!units.length){board.innerHTML='<span class="empty-board">— CAMPO LIVRE —</span>';return;}
- units.forEach((u,i)=>{const c=allCards[u.id];const el=document.createElement('div');const canAttack=side==='player'&&state.active==='player'&&u.ready&&!state.over;el.className='minion'+(canAttack?' ready':'')+(selectedAttacker===i?' selected':'')+(isTargetable(side,i)?' targetable':'');el.innerHTML=`<img src="${c.art}" alt=""><span class="cost">${c.cost}</span><span class="minion-name">${escapeHtml(c.name)}</span><span class="stat">${u.attack}</span><span class="stat hp">${u.health}</span>${u.taunt?'<span class="taunt">PROVOCAR</span>':''}${u.poison?'<span class="taunt">VENENO</span>':''}${u.rushOnly?'<span class="taunt">INVESTIDA</span>':''}`;el.title=`${c.name}\n${u.attack} ataque / ${u.health} vida${u.taunt?'\nProvocar':''}${u.ready?'\nPronto para atacar':''}`;el.onclick=()=>clickMinion(side,i);board.appendChild(el);});
+ units.forEach((u,i)=>{const c=allCards[u.id];const el=document.createElement('div');const canAttack=side==='player'&&state.active==='player'&&u.ready&&!state.over;el.className='minion'+(canAttack?' ready':'')+(selectedAttacker===i?' selected':'')+(isTargetable(side,i)?' targetable':'');el.innerHTML=`<img src="${c.art}" alt=""><span class="cost">${c.cost}</span><span class="minion-name">${escapeHtml(c.name)}</span><span class="stat">${u.attack}</span><span class="stat hp">${u.health}</span>${u.taunt?'<span class="taunt">PROVOCAR</span>':''}${u.poison?'<span class="taunt">VENENO</span>':''}${u.rushOnly?'<span class="taunt">INVESTIDA</span>':''}`;el.title=`${c.name}\n${u.attack} ataque / ${u.health} vida${u.taunt?'\nProvocar':''}${u.ready?'\nPronto para atacar':''}`;el.onclick=()=>clickMinion(side,i);el.addEventListener('pointerenter',()=>inspectCard(c,u));board.appendChild(el);});
 }
 function isTargetable(side,i){if(targetMode==='buff'||targetMode==='shield'||targetMode==='poisonbuff')return side==='player';if(targetMode==='damage')return side==='enemy';if(selectedAttacker!==null)return side==='enemy'&&(!p('enemy').board.some(u=>u.taunt)||p('enemy').board[i].taunt);return false;}
 function playCard(i){

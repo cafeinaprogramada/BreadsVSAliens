@@ -56,3 +56,57 @@ body{background-image:radial-gradient(ellipse at 50% 44%,#294b57 0%,#13232c 42%,
 .hero-row.enemy{flex-wrap:wrap;row-gap:15px}
 @media(max-width:1000px){.enemy-deck-zone{order:3;width:100%;flex-basis:100%;justify-content:center}.enemy-card-stack{width:56px;height:74px}.enemy-card-back{width:37px;height:57px}}
 @media(max-width:600px){.enemy-deck-zone{gap:8px}.enemy-card-stack{width:46px;height:62px}.enemy-card-stack small{font-size:5px}.enemy-card-back{width:32px;height:49px;margin-left:-15px}#enemy-hand-number{font-size:7px}}
+
+/* Arena v0.5 — wireframe-inspired, cinematic three-column battlefield */
+.table{max-width:1380px}
+.duel-layout{display:grid;grid-template-columns:minmax(185px,235px) minmax(0,1fr) 148px;gap:18px;align-items:start}
+.arena-main{min-width:0;display:flex;flex-direction:column}
+.inspect-panel{position:sticky;top:16px;min-height:400px;border:1px solid #b8d2cc50;border-radius:16px;background:linear-gradient(160deg,#23343d,#121e29);padding:14px;box-shadow:inset 0 0 30px #0005,0 14px 25px #0004}
+.inspect-heading{font:800 15px 'Barlow Condensed',sans-serif;letter-spacing:1.2px;color:#f8d783;border-bottom:1px solid #ffffff24;padding-bottom:10px}
+.card-inspect{padding-top:16px;display:flex;align-items:center;flex-direction:column;gap:10px;min-height:270px;text-align:center}
+.card-inspect img{width:min(100%,170px);max-height:205px;object-fit:contain;border:2px solid #ddc37d;border-radius:9px;box-shadow:0 8px 24px #000a}
+.card-inspect strong{font:800 22px 'Barlow Condensed',sans-serif;color:#f7d780}
+.card-inspect small{font-size:10px;color:#9fdef3;font-weight:800;letter-spacing:.3px}
+.card-inspect p{font-size:12px;line-height:1.6;color:#d3dee3;margin:0}
+.inspect-placeholder{margin:auto;color:#a7b6c2;font:600 13px/1.8 Inter,sans-serif}
+.inspect-foot{border-top:1px solid #ffffff20;margin-top:16px;padding-top:10px;color:#8098a8;font-size:10px;line-height:1.5}
+.arena-main .hero-row{display:flex;flex-direction:column;justify-content:center;gap:0}
+.arena-main .hero-row.enemy{flex-wrap:nowrap}
+.arena-main .hero-card{width:fit-content;min-width:0;max-width:100%;padding:8px 12px 17px;gap:10px;min-height:70px;border-radius:40px;background:linear-gradient(120deg,#263842,#15212b);border:2px solid #bbab7b}
+.arena-main .hero-portrait{height:51px;width:51px;border-radius:50%;font-size:28px;flex-shrink:0}
+.arena-main .hero-info{flex:0 1 auto;max-width:155px}
+.arena-main .hero-info b{font-size:15px}
+.arena-main .hero-info span{font-size:9px}
+.arena-main .health{position:relative;background:#542630;border:1px solid #ff888c;border-radius:50% 50% 48% 48%;min-width:49px;height:43px;justify-content:center;padding:3px 6px;gap:3px;box-shadow:0 0 12px #ec576344}
+.arena-main .health span{font-size:19px;color:#ff7180}
+.arena-main .health strong{font-size:20px}
+.arena-main .hero-mana{right:5px;bottom:-8px}
+.heart-meter{position:absolute;bottom:5px;left:65px;right:69px;height:6px;background:#381b26;border:1px solid #e17a84;border-radius:12px;overflow:hidden}
+.heart-meter-fill{height:100%;width:100%;background:linear-gradient(90deg,#e95362,#ffb5a5);transition:width .45s;box-shadow:0 0 10px #ff6c75}
+.heart-meter-label{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:9px;color:#ffb5af;font-weight:800;white-space:nowrap}
+.enemy-hand-display{display:flex;flex-direction:column;align-items:center;gap:2px;padding:18px 0 0}
+.enemy-hand-display .enemy-hand-backs{min-height:72px}
+.enemy-hand-display .enemy-card-back{height:68px;width:45px}
+.enemy-hand-display #enemy-hand-number{font-size:9px;letter-spacing:1.3px}
+.arena-main .battlefield{margin:12px 0 16px;min-height:300px;border:2px solid #b7c9a16b}
+.arena-main .board{min-height:118px}
+.arena-main .hero-row.player{margin-top:4px}
+.arena-main .player-help{align-items:center;text-align:center;margin-top:20px;max-width:100%}
+.arena-main .player-help b{font-size:15px}
+.arena-main .player-help span{font-size:10px}
+.arena-main .hand-area{margin-top:9px}
+.arena-main .hand{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding-bottom:14px;scrollbar-color:#af9155 #17232c}
+.arena-main .card{max-width:none;min-width:78px;flex:0 0 95px;height:137px}
+.arena-rail{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:22px;min-height:485px;padding-top:65px}
+.rail-deck{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;font:800 11px Inter,sans-serif;color:#d6e8f0}
+.rail-deck .enemy-card-stack,.player-card-stack{height:115px;width:88px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-direction:column;border:3px solid #e7c97d;box-shadow:5px 5px 0 #182735,9px 9px 0 #253b4b,0 0 22px #69a4dc66;transform:rotate(5deg)}
+.rail-deck .enemy-card-stack{background:repeating-linear-gradient(45deg,#192e42,#192e42 8px,#294761 8px,#294761 14px)}
+.player-card-stack{background:repeating-linear-gradient(45deg,#574026,#574026 8px,#826335 8px,#826335 14px);transform:rotate(-5deg)}
+.rail-deck small{font:800 8px Inter,sans-serif;color:#f5e2b3;letter-spacing:.4px;text-align:center}
+.rail-turn{width:100%;display:flex;flex-direction:column;align-items:center;gap:13px}
+.rail-turn .end-turn{width:100%;font-size:10px;padding:13px 7px;line-height:1.5;border-radius:14px}
+.rail-ai{font-size:10px;line-height:1.6;color:#a6c5cb;text-align:center;max-height:100px;overflow:auto}
+.arena-rail .rail-deck>span{padding:5px 12px;background:#13252d;border:1px solid #d4bd7c88;border-radius:20px}
+@media(max-width:1100px){.duel-layout{grid-template-columns:160px minmax(0,1fr) 116px;gap:10px}.inspect-panel{padding:10px}.arena-main .hero-info span{display:none}.arena-rail{padding-top:55px}.rail-deck .enemy-card-stack,.player-card-stack{width:69px;height:94px}.arena-main .minion{width:clamp(52px,9vw,90px)}}
+@media(max-width:760px){.duel-layout{grid-template-columns:minmax(0,1fr) 94px;gap:8px}.inspect-panel{grid-column:1/-1;position:static;min-height:0;padding:10px}.card-inspect{min-height:0;display:grid;grid-template-columns:62px 1fr;gap:4px 12px;text-align:left;align-items:center;padding-top:8px}.card-inspect img{grid-row:1/4;width:62px;height:75px}.card-inspect strong{font-size:16px}.card-inspect p{font-size:10px}.inspect-placeholder{grid-column:1/-1;font-size:11px}.inspect-foot{display:none}.arena-main{grid-column:1}.arena-rail{grid-column:2;grid-row:2;min-height:420px;padding-top:45px;gap:15px}.arena-main .hero-card{padding:5px 7px 14px}.arena-main .hero-portrait{width:36px;height:36px;font-size:20px}.arena-main .hero-info b{font-size:11px}.arena-main .health{min-width:38px;height:34px}.arena-main .health strong{font-size:15px}.arena-main .health span{font-size:14px}.heart-meter{left:47px;right:44px}.rail-deck .enemy-card-stack,.player-card-stack{width:58px;height:77px}.rail-deck small{font-size:6px}.rail-turn .end-turn{font-size:8px;padding:10px 4px}.rail-ai{font-size:8px}.arena-main .board{min-height:90px}.arena-main .battlefield{padding:10px 5px}.arena-main .minion{width:clamp(41px,10vw,65px);height:74px}.arena-main .card{min-width:73px;flex-basis:73px;height:115px}.enemy-hand-display .enemy-card-back{width:34px;height:50px}.arena-main .hero-mana{font-size:6px}.arena-main .player-help span{font-size:9px}}
+@media(max-width:420px){.duel-layout{grid-template-columns:minmax(0,1fr) 76px;gap:5px}.arena-main .hero-info b{font-size:9px}.arena-main .hero-portrait{width:31px;height:31px}.arena-main .hero-card{gap:4px}.arena-main .health{min-width:32px;height:31px}.arena-main .health strong{font-size:13px}.arena-main .battlefield{min-height:240px}.arena-main .minion{width:37px;height:62px}.arena-main .board{gap:2px}.rail-deck .enemy-card-stack,.player-card-stack{width:47px;height:64px}.rail-turn .end-turn{font-size:7px}}

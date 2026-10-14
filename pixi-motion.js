@@ -92,8 +92,7 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
 function summon(target,srcUrl,origin,special=false){
  const pos=point(target);if(!pos)return;
  if(special){const colors=[0xff4242,0xffaa33,0xffeb48,0x61f5a0,0x5ddaff,0x9b68ff,0xff79d5];colors.forEach((color,i)=>setTimeout(()=>burst(pos,color,22),i*105));target?.classList.add('tcg-rainbow-arrival');setTimeout(()=>target?.classList.remove('tcg-rainbow-arrival'),1900);}else{target?.classList.add('tcg-soft-arrival');setTimeout(()=>target?.classList.remove('tcg-soft-arrival'),1150);if(target?.classList.contains('tcg-taunt')||target?.querySelector('.taunt')?.textContent.includes('PROVOCAR')){target.classList.add('tcg-guard-drop');setTimeout(()=>target.classList.remove('tcg-guard-drop'),1250);}}
- target?.classList.add('tcg-arrival');
- setTimeout(()=>target?.classList.remove('tcg-arrival'),1000);
+ // Do not stack tcg-arrival over tcg-soft-arrival or rainbow; conflicting transforms cancel entry motion.
  // The card itself performs its field entrance; no floating full-resolution artwork.
 }
 async function aiAction(choice){

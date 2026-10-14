@@ -39,3 +39,5 @@ body{background-image:radial-gradient(ellipse at 50% 44%,#294b57 0%,#13232c 42%,
 @keyframes tcg-particle{0%{transform:translate(0,0) scale(.5);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(.1);opacity:0}}
 @media(max-width:800px){.tcg-banner{padding:14px 18px;min-width:80vw}.tcg-banner strong{font-size:28px}.tcg-drag-card{width:80px;height:104px}}
 @media(prefers-reduced-motion:reduce){.tcg-banner,.tcg-damage,.tcg-particle,.tcg-arrival,.tcg-impact,.tcg-hero-impact{animation:none!important;transition:none!important}}
+
+#tcg-rule-tip{position:fixed;z-index:110;pointer-events:none;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;width:300px;max-width:calc(100vw - 16px);padding:14px 16px;border-radius:9px;border:2px solid #f6cc72;background:linear-gradient(145deg,#273c45,#101c27);color:#fff1ce;box-shadow:0 12px 30px #000b;font:600 12px/1.6 Inter,sans-serif}#tcg-rule-tip.visible{opacity:1;transform:translateY(0)}

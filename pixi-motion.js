@@ -194,15 +194,26 @@ document.addEventListener('pointercancel',()=>{drag?.preview?.remove();drag?.el?
 const info=document.createElement('div');info.id='tcg-rule-tip';info.textContent='PROVOCAR — Esta criatura protege seus aliados. Enquanto estiver em campo, ataques de criaturas inimigas devem escolhê-la antes de atacar outros alvos.';document.body.appendChild(info);
 document.addEventListener('pointerover',e=>{const t=e.target.closest('.minion .taunt');if(t){info.classList.add('visible');const r=t.getBoundingClientRect();info.style.left=Math.min(innerWidth-310,Math.max(8,r.left))+'px';info.style.top=Math.max(8,r.top-108)+'px';}});
 document.addEventListener('pointerout',e=>{if(e.target.closest('.minion .taunt'))info.classList.remove('visible');});
+let previousVisualSnapshot={player:[],enemy:[]};
 const originalRender=render;
 render=function(){originalRender.apply(this,arguments);
  const taunts=p('enemy').board.some(u=>u.taunt);
- for(const side of ['player','enemy'])document.querySelectorAll('#'+side+'-board .minion').forEach((el,i)=>el.classList.toggle('tcg-poison-aura',!!p(side).board[i]?.poison));
+ for(const side of ['player','enemy']){
+ const previous=previousVisualSnapshot[side]||[];
+ document.querySelectorAll('#'+side+'-board .minion').forEach((el,i)=>{
+  const u=p(side).board[i],old=previous[i];el.classList.toggle('tcg-poison-aura',!!u?.poison);
+  if(old&&old.id===u?.id){
+   if(u.health<old.health){el.classList.add('tcg-red-hit');setTimeout(()=>el.classList.remove('tcg-red-hit'),1400);}
+   if(u.attack>old.attack||u.maxHealth>old.maxHealth||u.poison&&!old.poison||u.taunt&&!old.taunt||u.ready&&!old.ready&&u.rushOnly){el.classList.add('tcg-enchanted');setTimeout(()=>el.classList.remove('tcg-enchanted'),1500);}
+  }
+ });
+ previousVisualSnapshot[side]=p(side).board.map(u=>({...u}));
+}
  document.getElementById('enemy-hero')?.classList.toggle('tcg-legal-target',selectedAttacker!==null&&!taunts);
  document.querySelectorAll('#enemy-board .minion').forEach((el,i)=>{el.classList.toggle('tcg-legal-target',selectedAttacker!==null&&(!taunts||p('enemy').board[i].taunt));el.classList.toggle('tcg-taunt',!!p('enemy').board[i]?.taunt);});
  document.querySelectorAll('#player-board .minion').forEach((el,i)=>el.classList.toggle('tcg-taunt',!!p('player').board[i]?.taunt));
 };
 const originalStart=startGame;
-startGame=function(){seq++;busy=false;overlay.innerHTML='';if(app)app.stage.removeChildren().forEach(x=>x.destroy());originalStart.apply(this,arguments);banner('PÃES VS ALIENS','UM NOVO DUELO COMEÇA');};
+startGame=function(){previousVisualSnapshot={player:[],enemy:[]};seq++;busy=false;overlay.innerHTML='';if(app)app.stage.removeChildren().forEach(x=>x.destroy());originalStart.apply(this,arguments);banner('PÃES VS ALIENS','UM NOVO DUELO COMEÇA');};
 render();banner(active?'PIXI.JS ATIVO':'MODO COMPATÍVEL','ARRASTE CARTAS PARA JOGAR E ATACAR');
 })();

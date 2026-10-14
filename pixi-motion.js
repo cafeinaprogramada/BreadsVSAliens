@@ -58,7 +58,7 @@ function burst(pos,color=0xffa34b,count=28){
   for(let i=0;i<Math.min(count,75);i++){const e=document.createElement('i');e.className='tcg-particle';e.style.left=pos.x+'px';e.style.top=pos.y+'px';e.style.setProperty('--x',(Math.random()-.5)*220+'px');e.style.setProperty('--y',(Math.random()-.5)*190+'px');overlay.appendChild(e);setTimeout(()=>e.remove(),850);}
  }
 }
-function tween(ms,cb){return new Promise(resolve=>{// Combat animations are deliberately cinematic, even when reduced motion is enabled.const start=performance.now();function tick(now){let t=Math.min(1,(now-start)/ms);cb(t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2);if(t<1)requestAnimationFrame(tick);else resolve();}requestAnimationFrame(tick);});}
+function tween(ms,cb){return new Promise(resolve=>{const start=performance.now();function tick(now){let t=Math.min(1,(now-start)/ms);cb(t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2);if(t<1)requestAnimationFrame(tick);else resolve();}requestAnimationFrame(tick);});}
 function sprite(src,pos){
  if(!active||!src||!pos)return null;
  try{const s=P.Sprite.from(src);s.anchor.set(.5);s.x=pos.x;s.y=pos.y;s.width=pos.w;s.height=pos.h;s.zIndex=100;app.stage.addChild(s);return s;}catch(e){return null;}

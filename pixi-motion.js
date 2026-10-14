@@ -40,7 +40,7 @@ function banner(name,detail=''){
 function num(target,n,positive=false){
  const p=point(target);if(!p||!n)return;
  const el=document.createElement('b');el.className='tcg-damage '+(positive?'healing':'');el.textContent=(positive?'+':'−')+n;
- el.style.left=p.x+'px';el.style.top=p.y+'px';overlay.appendChild(el);setTimeout(()=>el.remove(),1400);
+ el.style.left=p.x+'px';el.style.top=p.y+'px';overlay.appendChild(el);setTimeout(()=>el.remove(),2400);
  if(target?.classList.contains('hero-card')){
  target.classList.remove('tcg-hero-impact');void target.offsetWidth;target.classList.add('tcg-hero-impact');
  setTimeout(()=>target.classList.remove('tcg-hero-impact'),1050);
@@ -73,7 +73,7 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
  if(line)app.stage.addChild(line);
  if(srcEl)srcEl.classList.add('tcg-in-flight');
  const attackerGhost=srcEl?.cloneNode(true);if(attackerGhost){attackerGhost.className='tcg-attack-ghost';attackerGhost.style.width=a.w+'px';attackerGhost.style.height=a.h+'px';overlay.appendChild(attackerGhost);srcEl.style.opacity='0.15';}
- await tween(760,t=>{
+ await tween(1650,t=>{
   const arc=Math.sin(Math.PI*t)*-65;
   if(sp){sp.x=a.x+(b.x-a.x)*t;sp.y=a.y+(b.y-a.y)*t+arc;sp.rotation=Math.sin(Math.PI*t)*.12;sp.scale.set(1+Math.sin(Math.PI*t)*.28);}
   if(attackerGhost){attackerGhost.style.left=(a.x+(b.x-a.x)*t)+'px';attackerGhost.style.top=(a.y+(b.y-a.y)*t+arc)+'px';attackerGhost.style.transform='translate(-50%,-50%) scale('+(1+Math.sin(Math.PI*t)*.2)+')';}
@@ -82,7 +82,8 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
  });
  burst(b,0xff6748,75);setTimeout(()=>burst(b,0xffd68c,30),200);num(dstEl,damage);if(returnDamage){burst(a,0x64ccff,16);num(srcEl,returnDamage);}
  if(dstEl){dstEl.classList.remove('tcg-impact');void dstEl.offsetWidth;dstEl.classList.add('tcg-impact');setTimeout(()=>dstEl.classList.remove('tcg-impact'),900);}
- await tween(430,t=>{if(sp){sp.x=b.x+(a.x-b.x)*t;sp.y=b.y+(a.y-b.y)*t;sp.alpha=1-t*.4;}
+ await sleep(1200);
+ await tween(800,t=>{if(sp){sp.x=b.x+(a.x-b.x)*t;sp.y=b.y+(a.y-b.y)*t;sp.alpha=1-t*.4;}
   if(attackerGhost){attackerGhost.style.left=(b.x+(a.x-b.x)*t)+'px';attackerGhost.style.top=(b.y+(a.y-b.y)*t)+'px';attackerGhost.style.opacity=String(1-t*.35);}
   if(fallback){fallback.style.left=(b.x+(a.x-b.x)*t)+'px';fallback.style.top=(b.y+(a.y-b.y)*t)+'px';fallback.style.opacity=String(1-t*.35);}});
  if(srcEl){srcEl.classList.remove('tcg-in-flight');srcEl.style.opacity='';}attackerGhost?.remove();
@@ -90,7 +91,7 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
 }
 function summon(target,srcUrl,origin,special=false){
  const pos=point(target);if(!pos)return;
- if(special){const colors=[0xff4242,0xffaa33,0xffeb48,0x61f5a0,0x5ddaff,0x9b68ff,0xff79d5];colors.forEach((color,i)=>setTimeout(()=>burst(pos,color,22),i*105));target?.classList.add('tcg-rainbow-arrival');setTimeout(()=>target?.classList.remove('tcg-rainbow-arrival'),1900);}else{burst(pos,0xffd177,70);setTimeout(()=>burst(pos,0x69d9ff,36),270);}
+ if(special){const colors=[0xff4242,0xffaa33,0xffeb48,0x61f5a0,0x5ddaff,0x9b68ff,0xff79d5];colors.forEach((color,i)=>setTimeout(()=>burst(pos,color,22),i*105));target?.classList.add('tcg-rainbow-arrival');setTimeout(()=>target?.classList.remove('tcg-rainbow-arrival'),1900);}else{target?.classList.add('tcg-soft-arrival');setTimeout(()=>target?.classList.remove('tcg-soft-arrival'),1150);if(target?.classList.contains('tcg-taunt')||target?.querySelector('.taunt')?.textContent.includes('PROVOCAR')){target.classList.add('tcg-guard-drop');setTimeout(()=>target.classList.remove('tcg-guard-drop'),1250);}}
  target?.classList.add('tcg-arrival');
  setTimeout(()=>target?.classList.remove('tcg-arrival'),1000);
  if(origin&&srcUrl){const a=point(origin),s=sprite(srcUrl,a);if(s){tween(900,t=>{s.x=a.x+(pos.x-a.x)*t;s.y=a.y+(pos.y-a.y)*t-65*Math.sin(Math.PI*t);s.scale.set(1-t*.25);s.alpha=1-t*.6;}).then(()=>remove(s));}}
@@ -115,6 +116,7 @@ playCard=function(i){
  if(busy)return;
  const c=allCards[p('player').hand[i]],src=document.querySelectorAll('#hand .card')[i],origin=point(src),before=p('player').board.length;
  originalPlay.apply(this,arguments);
+ if(c?.kind==='spell'&&p('player').hand.length!==undefined){const buff=['buff','shield','poisonbuff','chargebuff','teamBuff'].includes(c.ability);if(buff)document.querySelectorAll('#player-board .minion').forEach(el=>{el.classList.add('tcg-enchanted');setTimeout(()=>el.classList.remove('tcg-enchanted'),1200);});}
  if(c?.kind==='unit'&&p('player').board.length>before){
   const target=unit('player',before);const special=['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(c.name);summon(target,c.art,null,special);
   if(origin){const s=sprite(c.art,origin),b=point(target);if(s&&b)tween(880,t=>{s.x=origin.x+(b.x-origin.x)*t;s.y=origin.y+(b.y-origin.y)*t-75*Math.sin(Math.PI*t);s.alpha=1-t*.7;s.scale.set(1-t*.22);}).then(()=>remove(s));}
@@ -179,7 +181,7 @@ document.addEventListener('pointerup',e=>{
  if(d.card){
   const friendly=target?.closest('#player-board .minion'),enemyTarget=target?.closest('#enemy-board .minion');
   const c=allCards[p('player').hand[d.idx]];
-  if(c?.kind==='spell'&&['buff','shield','poisonbuff'].includes(c.ability)&&friendly){playCard(d.idx);clickMinion('player',Array.from(document.querySelectorAll('#player-board .minion')).indexOf(friendly));}
+  if(c?.kind==='spell'&&['buff','shield','poisonbuff','chargebuff'].includes(c.ability)&&friendly){playCard(d.idx);clickMinion('player',Array.from(document.querySelectorAll('#player-board .minion')).indexOf(friendly));}
   else if(c?.kind==='spell'&&c.ability==='damage'&&enemyTarget){playCard(d.idx);clickMinion('enemy',Array.from(document.querySelectorAll('#enemy-board .minion')).indexOf(enemyTarget));}
   else if(target?.closest('#player-board,.battlefield,#enemy-board'))playCard(d.idx);
  }else{
@@ -195,6 +197,7 @@ document.addEventListener('pointerout',e=>{if(e.target.closest('.minion .taunt')
 const originalRender=render;
 render=function(){originalRender.apply(this,arguments);
  const taunts=p('enemy').board.some(u=>u.taunt);
+ for(const side of ['player','enemy'])document.querySelectorAll('#'+side+'-board .minion').forEach((el,i)=>el.classList.toggle('tcg-poison-aura',!!p(side).board[i]?.poison));
  document.getElementById('enemy-hero')?.classList.toggle('tcg-legal-target',selectedAttacker!==null&&!taunts);
  document.querySelectorAll('#enemy-board .minion').forEach((el,i)=>{el.classList.toggle('tcg-legal-target',selectedAttacker!==null&&(!taunts||p('enemy').board[i].taunt));el.classList.toggle('tcg-taunt',!!p('enemy').board[i]?.taunt);});
  document.querySelectorAll('#player-board .minion').forEach((el,i)=>el.classList.toggle('tcg-taunt',!!p('player').board[i]?.taunt));

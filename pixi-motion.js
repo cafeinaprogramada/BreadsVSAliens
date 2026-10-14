@@ -19,12 +19,23 @@ const unit=(side,i)=>document.querySelectorAll('#'+(side==='player'?'player-boar
 const hero=side=>document.getElementById(side==='player'?'player-hero':'enemy-hero');
 const cardImg=el=>el?.querySelector('img')?.getAttribute('src');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot','"':'&quot;'}[c]));
+const notices=[];let noticeActive=false;
 function banner(name,detail=''){
- const el=document.createElement('div');el.className='tcg-banner';
- const title=document.createElement('strong');title.textContent=name;
- const sub=document.createElement('small');sub.textContent=detail;el.append(title,sub);overlay.appendChild(el);
- requestAnimationFrame(()=>el.classList.add('visible'));
- setTimeout(()=>{el.classList.remove('visible');setTimeout(()=>el.remove(),480)},1700);
+ notices.push({name,detail});
+ if(noticeActive)return;
+ (async function runNotices(){
+  noticeActive=true;
+  while(notices.length){
+   const msg=notices.shift(),el=document.createElement('div');el.className='tcg-banner';
+   const title=document.createElement('strong');title.textContent=msg.name;
+   const sub=document.createElement('small');sub.textContent=msg.detail;el.append(title,sub);overlay.appendChild(el);
+   await sleep(70);el.classList.add('visible');
+   await sleep(3500);el.classList.remove('visible');
+   await sleep(650);el.remove();
+   await sleep(180);
+  }
+  noticeActive=false;
+ })().catch(e=>{console.error(e);noticeActive=false;});
 }
 function num(target,n,positive=false){
  const p=point(target);if(!p||!n)return;
@@ -44,7 +55,7 @@ function burst(pos,color=0xffa34b,count=28){
    tween(680,t=>{g.x=pos.x+Math.cos(a)*dist*t;g.y=pos.y+Math.sin(a)*dist*t-20*t*t;g.alpha=1-t;g.scale.set(1-t*.7);}).then(()=>{app.stage.removeChild(g);g.destroy();});
   }
  }else{
-  for(let i=0;i<Math.min(count,22);i++){const e=document.createElement('i');e.className='tcg-particle';e.style.left=pos.x+'px';e.style.top=pos.y+'px';e.style.setProperty('--x',(Math.random()-.5)*220+'px');e.style.setProperty('--y',(Math.random()-.5)*190+'px');overlay.appendChild(e);setTimeout(()=>e.remove(),850);}
+  for(let i=0;i<Math.min(count,75);i++){const e=document.createElement('i');e.className='tcg-particle';e.style.left=pos.x+'px';e.style.top=pos.y+'px';e.style.setProperty('--x',(Math.random()-.5)*220+'px');e.style.setProperty('--y',(Math.random()-.5)*190+'px');overlay.appendChild(e);setTimeout(()=>e.remove(),850);}
  }
 }
 function tween(ms,cb){return new Promise(resolve=>{if(motion){cb(1);resolve();return;}const start=performance.now();function tick(now){let t=Math.min(1,(now-start)/ms);cb(t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2);if(t<1)requestAnimationFrame(tick);else resolve();}requestAnimationFrame(tick);});}
@@ -56,23 +67,27 @@ function remove(s){if(s&&app){app.stage.removeChild(s);s.destroy();}}
 async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
  const a=point(srcEl),b=point(dstEl);if(!a||!b){return;}
  const sp=sprite(srcUrl||cardImg(srcEl),a);
+ const fallback=!sp?document.createElement('img'):null;
+ if(fallback){fallback.className='tcg-moving-card';fallback.src=srcUrl||cardImg(srcEl)||'';fallback.style.width=a.w+'px';fallback.style.height=a.h+'px';overlay.appendChild(fallback);}
  const line=active?new P.Graphics():null;
  if(line)app.stage.addChild(line);
  if(srcEl)srcEl.classList.add('tcg-in-flight');
  await tween(760,t=>{
   const arc=Math.sin(Math.PI*t)*-65;
   if(sp){sp.x=a.x+(b.x-a.x)*t;sp.y=a.y+(b.y-a.y)*t+arc;sp.rotation=Math.sin(Math.PI*t)*.12;sp.scale.set(1+Math.sin(Math.PI*t)*.28);}
+  if(fallback){fallback.style.left=(a.x+(b.x-a.x)*t)+'px';fallback.style.top=(a.y+(b.y-a.y)*t+arc)+'px';fallback.style.transform='translate(-50%,-50%) scale('+(1+Math.sin(Math.PI*t)*.3)+')';}
   if(line){line.clear();line.lineStyle(4,0xffd780,.6);line.moveTo(a.x,a.y);line.lineTo(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t+arc);}
  });
- burst(b,0xff6748,34);num(dstEl,damage);if(returnDamage){burst(a,0x64ccff,16);num(srcEl,returnDamage);}
+ burst(b,0xff6748,75);setTimeout(()=>burst(b,0xffd68c,30),200);num(dstEl,damage);if(returnDamage){burst(a,0x64ccff,16);num(srcEl,returnDamage);}
  if(dstEl){dstEl.classList.remove('tcg-impact');void dstEl.offsetWidth;dstEl.classList.add('tcg-impact');setTimeout(()=>dstEl.classList.remove('tcg-impact'),900);}
- await tween(430,t=>{if(sp){sp.x=b.x+(a.x-b.x)*t;sp.y=b.y+(a.y-b.y)*t;sp.alpha=1-t*.4;}});
+ await tween(430,t=>{if(sp){sp.x=b.x+(a.x-b.x)*t;sp.y=b.y+(a.y-b.y)*t;sp.alpha=1-t*.4;}
+  if(fallback){fallback.style.left=(b.x+(a.x-b.x)*t)+'px';fallback.style.top=(b.y+(a.y-b.y)*t)+'px';fallback.style.opacity=String(1-t*.35);}});
  if(srcEl)srcEl.classList.remove('tcg-in-flight');
- remove(sp);if(line){app.stage.removeChild(line);line.destroy();}
+ remove(sp);fallback?.remove();if(line){app.stage.removeChild(line);line.destroy();}
 }
 function summon(target,srcUrl,origin){
  const pos=point(target);if(!pos)return;
- burst(pos,0xffd177,24);
+ burst(pos,0xffd177,70);setTimeout(()=>burst(pos,0x69d9ff,36),270);
  target?.classList.add('tcg-arrival');
  setTimeout(()=>target?.classList.remove('tcg-arrival'),1000);
  if(origin&&srcUrl){const a=point(origin),s=sprite(srcUrl,a);if(s){tween(900,t=>{s.x=a.x+(pos.x-a.x)*t;s.y=a.y+(pos.y-a.y)*t-65*Math.sin(Math.PI*t);s.scale.set(1-t*.25);s.alpha=1-t*.6;}).then(()=>remove(s));}}
@@ -84,13 +99,13 @@ async function aiAction(choice){
  const card=choice.type==='unit'?allCards[p('enemy').hand[choice.i]]:null;
  if(choice.type==='attack'||choice.type==='face'){
   banner('ATAQUE DE ZORK',allCards[a.id]?.name+' → '+(d?allCards[d.id]?.name:'SEU HERÓI'));
-  await sleep(320);await travel(src,dest,art,attack,retaliation);
+  await sleep(480);await travel(src,dest,art,attack,retaliation);
   executeAI(choice);render();await sleep(200);return;
  }
  executeAI(choice);render();
  if(choice.type==='unit'){summon(unit('enemy',p('enemy').board.length-1),card?.art);banner('INVOCAÇÃO ALIENÍGENA',card?.name||'');}
  else if(choice.type==='spell')banner('MAGIA ALIENÍGENA','Zork lançou um feitiço');
- await sleep(850);
+ await sleep(1500);
 }
 const originalPlay=playCard;
 playCard=function(i){

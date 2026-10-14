@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pães vs Aliens — Torre de Batalha</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+  <div class="brand"><span class="brand-icon">🍞</span><div><h1>PÃES <i>vs</i> ALIENS</h1><p>PROTÓTIPO JOGÁVEL · TORRE DE BATALHA</p></div></div>
+  <div class="top-actions"><span class="pill" id="turn-label">SEU TURNO</span><button id="restart" class="small-btn">↻ Reiniciar duelo</button></div>
+</header>
+<main class="table">
+  <div class="statusline"><span id="round-label">BATALHA 01</span><span id="status">A torre começou. Boa sorte, Pãozudo.</span><span id="deck-count">DECKS 24 / 24</span></div>
+  <section class="hero-row enemy">
+    <div class="hero-card enemy-hero" id="enemy-hero" data-target="enemyHero">
+      <div class="hero-portrait alien-portrait">👽</div><div class="hero-info"><b>COMANDANTE ZORK</b><span>Invasores da Nebulosa</span></div>
+      <div class="health"><span>♥</span><strong id="enemy-health">30</strong></div>
+      <div class="hero-mana" id="enemy-mana">0 / 0 MANA</div>
+    </div>
+    <div class="enemy-intel"><div class="intel-label">PROTOCOLO ALIEN</div><div id="ai-thought">“Analisando formas de vida...”</div><div class="difficulty"><span></span><span></span><span></span><span></span><small>IA TÁTICA · NORMAL+</small></div></div>
+  </section>
+  <div class="battlefield">
+    <div class="lane-label"><span>ESQUADRÃO ALIENÍGENA</span><span id="enemy-board-count">0 / 7</span></div>
+    <div id="enemy-board" class="board"></div>
+    <div class="center-divider"><span>✦</span><small>CAMPO DE BATALHA</small><span>✦</span></div>
+    <div id="player-board" class="board"></div>
+    <div class="lane-label player-lane"><span>SEU ESQUADRÃO · PÃES</span><span id="player-board-count">0 / 7</span></div>
+  </div>
+  <section class="hero-row player">
+    <div class="hero-card player-hero" id="player-hero" data-target="playerHero">
+      <div class="hero-portrait bread-portrait">🥖</div><div class="hero-info"><b>VOCÊ · MESTRE DOS PÃES</b><span>Resistência da Padaria</span></div>
+      <div class="health"><span>♥</span><strong id="player-health">30</strong></div>
+      <div class="hero-mana" id="player-mana">1 / 1 MANA</div>
+    </div>
+    <div class="player-help"><b id="action-title">Sua vez de agir</b><span id="action-help">Jogue cartas, ataque e encerre o turno.</span><div class="turn-controls"><button id="end-turn" class="end-turn">ENCERRAR TURNO <span>➜</span></button></div></div>
+  </section>
+  <section class="hand-area"><div class="hand-head"><div><b>SUA MÃO</b><span id="hand-count">3 cartas</span></div><div class="mana-display"><span>✦</span><strong id="mana-text">1 / 1</strong><small>MANA</small><div id="mana-gems" class="gems"></div></div></div><div id="hand" class="hand"></div></section>
+</main>
+<footer><span>BUILD 0.1 · REGRAS PROVISÓRIAS</span><span>As estatísticas serão rebalanceadas com você.</span><span id="log-toggle" tabindex="0">REGISTRO DE COMBATE ▾</span></footer>
+<div id="log" class="combat-log"></div>
+<div id="modal" class="modal hidden"><div class="modal-card"><div class="modal-symbol" id="modal-symbol">🏆</div><h2 id="modal-title">Vitória!</h2><p id="modal-text"></p><button id="modal-restart" class="end-turn">JOGAR NOVAMENTE ↻</button></div></div>
+<div id="toast" class="toast"></div>
+</div>
+<script src="cards-data.js"></script><script src="game.js"></script>
+</body></html>

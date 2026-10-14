@@ -1,0 +1,36 @@
+PÃES VS ALIENS — PROTÓTIPO JOGÁVEL 0.1
+========================================
+
+COMO JOGAR
+1. Extraia a pasta inteira do ZIP.
+2. Abra index.html em um navegador moderno (Chrome, Edge ou Firefox).
+3. Você controla o deck dos Pães. O Comandante Zork controla os Aliens.
+4. Clique numa carta da sua mão para jogá-la. Cartas com efeito de alvo pedem que você clique numa criatura destacada.
+5. Clique numa criatura sua que esteja pronta e depois num inimigo para atacar. Se não houver Aliens com Provocar, você também pode atacar o herói inimigo.
+6. Clique em ENCERRAR TURNO para a IA jogar.
+
+REGRAS PROVISÓRIAS
+- Cada herói começa com 30 de vida.
+- Decks fixos de 24 cartas, embaralhados a cada duelo.
+- Você começa com 3 cartas; a IA começa com 4.
+- A cada turno, o limite de mana aumenta em 1 até 10 e a mana é recarregada.
+- O jogador compra 1 carta no começo de cada turno; a IA também.
+- Cada lado pode ter até 7 criaturas no campo.
+- Criaturas recém-invocadas não podem atacar até o próximo turno.
+- Combate entre criaturas causa dano simultâneo.
+- Provocar impede atacar diretamente o herói inimigo enquanto houver uma criatura com Provocar.
+- Ao esgotar o deck, a fadiga causa dano crescente a cada compra.
+- Feitiços e efeitos são resolvidos conforme as descrições do protótipo.
+
+ATRIBUTOS E BALANCEAMENTO
+As estatísticas, custos e efeitos foram inventados para esta primeira versão, como solicitado. O deck alienígena tem uma curva ligeiramente mais consistente e alguns efeitos de pressão, mas os Pães têm boas opções defensivas e remoções. O equilíbrio ainda é inicial e deve ser ajustado após testes reais.
+
+ARQUIVOS
+- index.html: interface do jogo
+- style.css: visual e responsividade
+- game.js: regras de combate, turnos e IA
+- cards-data.js: catálogo e decks fixos
+- assets/paes e assets/aliens: artes originais fornecidas pelo usuário
+
+OBSERVAÇÕES
+Este é um protótipo local para testar o loop principal de combate. Ainda não inclui progressão entre andares, salvamento, seleção de dificuldade, animações elaboradas ou um editor de cartas. O código e o catálogo estão separados para facilitar customizações futuras.

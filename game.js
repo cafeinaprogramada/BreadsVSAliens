@@ -34,15 +34,17 @@ function buildDeck(faction){
  }
  return shuffle(chosen);
 }
-function boot(){const data=window.CARD_DATA;allCards=Object.fromEntries(data.cards.map(c=>[c.id,c]));window.deckData=data.decks;startGame();}
+function boot(){const data=window.CARD_DATA;allCards=Object.fromEntries(data.cards.map(c=>[c.id,c]));window.deckData=data.decks;if(window.TCGMenu)window.TCGMenu.show();else startGame();}
 function startGame(){
  if(typeof hideInspect==='function')hideInspect();
- state={turn:1,active:'player',over:false,players:{player:{health:30,maxMana:0,mana:0,deck:buildDeck('bread'),graveyard:[],hand:[],board:[],fatigue:0},enemy:{health:30,maxMana:0,mana:0,deck:buildDeck('alien'),graveyard:[],hand:[],board:[],fatigue:0}},logs:[],lastAction:''};
+ const match=window.TCGMenu?.match||{player:'bread',enemy:'alien'};
+ const playerFaction=match.player||'bread',enemyFaction=match.enemy||'alien';
+ state={turn:1,active:'player',over:false,players:{player:{health:30,maxMana:0,mana:0,deck:buildDeck(playerFaction),graveyard:[],hand:[],board:[],fatigue:0},enemy:{health:30,maxMana:0,mana:0,deck:buildDeck(enemyFaction),graveyard:[],hand:[],board:[],fatigue:0}},logs:[],lastAction:''};
  selectedCard=null;selectedAttacker=null;targetMode=null;aiBusy=false;
  for(let i=0;i<3;i++) draw('player'); for(let i=0;i<4;i++) draw('enemy');
  state.players.player.maxMana=1;state.players.player.mana=1;state.players.player.board=[];state.players.enemy.board=[];
- log('O duelo começou! Você controla os Pães; o Comandante Zork controla os Aliens.');
- setStatus('Sua vez. Jogue uma carta ou examine o campo.'); render();
+ log('O duelo começou! '+(window.TCGMenu?.name(playerFaction)||playerFaction)+' contra '+(window.TCGMenu?.name(enemyFaction)||enemyFaction)+'.');
+ window.TCGMenu?.applyBattle();setStatus('Sua vez. Jogue uma carta ou examine o campo.'); render();
 }
 function p(side=state.active){return state.players[side]}
 function draw(side){const pl=p(side);if(pl.deck.length){const id=pl.deck.pop();if(pl.hand.length<10)pl.hand.push(id);else log((side==='player'?'Sua mão':'A mão de Zork')+' está cheia: '+allCards[id].name+' foi descartada.');}else{pl.fatigue++;pl.health-=pl.fatigue;log((side==='player'?'Você':'Zork')+' sofre '+pl.fatigue+' de dano por fadiga.');if(pl.health<=0) checkEnd();}}
@@ -294,7 +296,7 @@ function executeAI(a){const me=p('enemy'),foe=p('player');
  if(a.type==='face'){const at=me.board[a.i];if(at&&at.ready&&!at.rushOnly&&!foe.board.some(u=>u.taunt)){foe.health-=at.attack;at.ready=false;log(`Zork atacou seu herói com ${allCards[at.id].name}, causando ${at.attack} de dano.`);}}
  checkEnd();
 }
-function checkEnd(){if(state.over)return;if(p('player').health<=0||p('enemy').health<=0){state.over=true;const win=p('enemy').health<=0; $('modal-symbol').textContent=win?'🏆':'👽';$('modal-title').textContent=win?'VITÓRIA DOS PÃES!':'A TORRE RESISTIU… NÃO';$('modal-text').textContent=win?'Você derrotou o Comandante Zork! Esta é a primeira vitória da torre — em breve poderemos adicionar o próximo adversário.':'Zork venceu este duelo. Cada derrota ajuda a ajustar os decks; tente outra estratégia e volte para a batalha.';$('modal').classList.remove('hidden');render();}}
+function checkEnd(){if(state.over)return;if(p('player').health<=0||p('enemy').health<=0){state.over=true;const win=p('enemy').health<=0; $('modal-symbol').textContent=win?'🏆':'👽';$('modal-title').textContent=win?'VITÓRIA!':'DERROTA!';$('modal-text').textContent=win?'Você venceu o duelo contra '+(window.TCGMenu?.name(window.TCGMenu?.match.enemy)||'a CPU')+'!':'A CPU venceu o duelo. Experimente outra estratégia ou um novo confronto.';$('modal').classList.remove('hidden');render();}}
 $('restart').onclick=startGame;$('modal-restart').onclick=()=>{$('modal').classList.add('hidden');startGame();};
 $('log-toggle').onclick=()=>$('log').classList.toggle('open');
 try { boot(); } catch(e) { console.error(e); document.body.innerHTML='<div style="padding:30px;color:white">Não foi possível iniciar o jogo. Verifique cards-data.js e o console do navegador.</div>'; }

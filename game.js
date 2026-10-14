@@ -89,39 +89,126 @@ function aiTurn(){
  if(state.over)return;aiBusy=true;beginTurn('enemy');render();let safety=0;
  async function step(){
   if(state.over){aiBusy=false;return;}
-  const choice=chooseAIAction();if(choice&&safety++<12){if(window.TCGMotion)await window.TCGMotion.aiAction(choice);else{executeAI(choice);render();}await new Promise(r=>setTimeout(r,300));return step();}
+  const choice=chooseAIAction();if(choice&&safety++<18){if(window.TCGMotion)await window.TCGMotion.aiAction(choice);else{executeAI(choice);render();}await new Promise(r=>setTimeout(r,700));return step();}
   aiBusy=false;state.active='player';state.turn++;beginTurn('player');setStatus('Seu turno! A mana foi recarregada e você comprou uma carta.');state.lastAction='“Os pães ainda estão de pé. Incrível...”';log('Zork encerrou o turno. Sua vez!');render();checkEnd();window.TCGMotion?.banner('SEU TURNO','PREPARE O ESQUADRÃO');
  }
- window.TCGMotion?.banner('TURNO ALIENÍGENA','ZORK VAI AGIR');setTimeout(()=>step().catch(console.error),1350);
+ window.TCGMotion?.banner('TURNO ALIENÍGENA','ZORK VAI AGIR');setTimeout(()=>step().catch(console.error),3200);
 }
+/* AI v2 — finite-state tactical planner; evaluates every action after each move. */
+const AI_STYLES=[
+ {id:'tempo',name:'Pressão de campo',aggression:1.2,trade:.75,hold:.8},
+ {id:'control',name:'Controle e remoções',aggression:.65,trade:1.65,hold:1.15},
+ {id:'swarm',name:'Exército numeroso',aggression:1.05,trade:1,hold:.5},
+ {id:'fortress',name:'Fortaleza defensiva',aggression:.65,trade:1.35,hold:1.4},
+ {id:'value',name:'Economia de recursos',aggression:.9,trade:1.1,hold:1.85},
+ {id:'finisher',name:'Finalização agressiva',aggression:2.2,trade:.6,hold:.4}
+];
+let aiBrain={style:AI_STYLES[0],phase:'assess',turn:-1,plays:0,initialMana:0};
+function aiPlan(){
+ const me=p('enemy'),foe=p('player'),ready=me.board.filter(u=>u.ready),enemyPower=ready.reduce((n,u)=>n+u.attack,0);
+ const ownPower=foe.board.reduce((n,u)=>n+u.attack,0);
+ if(aiBrain.turn!==state.turn){
+  const advantage=(me.board.reduce((n,u)=>n+u.attack+u.health*.55,0)-foe.board.reduce((n,u)=>n+u.attack+u.health*.55,0));
+  let id=state.turn%5;
+  if(me.health<=12||foe.health<=enemyPower+4)id=5;
+  else if(ownPower>=me.health*.35||advantage< -5)id=3;
+  else if(foe.board.length>=3)id=1;
+  else if(me.hand.length<=2)id=4;
+  else if(me.hand.filter(id=>allCards[id]?.cost<=2).length>=3)id=2;
+  aiBrain={style:AI_STYLES[id],phase:'assess',turn:state.turn,plays:0,initialMana:me.mana};
+ }
+ return aiBrain;
+}
+function aiThreat(u){return u.attack*1.9+u.health*.7+(u.taunt?4:0)+(u.ready?1:0);}
 function chooseAIAction(){
- const foe=p('player'),me=p('enemy');
- // Prefer high-value legal spells first when useful.
- for(let i=0;i<me.hand.length;i++){const c=allCards[me.hand[i]];if(c.cost>me.mana)continue;
-  if(c.kind==='spell'&&c.ability==='damage'&&foe.board.length){const t=foe.board.slice().sort((a,b)=>(b.attack*1.5+b.health)-(a.attack*1.5+a.health))[0];if(t.health<=3||t.attack>=4)return {type:'spell',i,target:foe.board.indexOf(t)};}
-  if(c.kind==='spell'&&c.ability==='damageall'&&foe.board.length>=2)return {type:'spell',i};
-  if(c.kind==='spell'&&c.ability==='heal'&&me.health<=23)return {type:'spell',i};
-  if(c.kind==='spell'&&c.ability==='shield'&&me.board.length)return {type:'spell',i,target:me.board.findIndex(u=>!u.taunt)};
-  if(c.kind==='spell'&&c.ability==='buff'&&me.board.length)return {type:'spell',i,target:me.board.slice().sort((a,b)=>b.attack-a.attack).findIndex(u=>true)};
- }
- let options=[];for(let i=0;i<me.hand.length;i++){const c=allCards[me.hand[i]];if(c.cost<=me.mana&&c.kind==='unit'&&me.board.length<7){let score=c.attack*1.05+c.health*.75-c.cost*.18+(c.ability==='guard'&&foe.health<18?2:0)+(c.ability==='heal'&&me.health<23?1.5:0);if(c.cost>=me.maxMana-1)score+=.8;options.push({type:'unit',i,score});}}
- if(options.length)return options.sort((a,b)=>b.score-a.score)[0];
- // Attack with the best trade available, or go face if no taunt.
+ const me=p('enemy'),foe=p('player'),brain=aiPlan(),style=brain.style;
  const taunts=foe.board.map((u,i)=>({u,i})).filter(x=>x.u.taunt);
- for(let i=0;i<me.board.length;i++){const a=me.board[i];if(!a.ready)continue;
-  let targets=taunts.length?taunts:foe.board.map((u,i)=>({u,i}));
-  const kills=targets.filter(t=>t.u.health<=a.attack).sort((x,y)=>(y.u.attack*1.3+y.u.health)-(x.u.attack*1.3+x.u.health));
-  if(kills.length)return {type:'attack',i,target:kills[0].i};
+ const attackers=me.board.map((u,i)=>({u,i})).filter(x=>x.u.ready&&x.u.attack>0);
+ const totalAttack=attackers.reduce((n,x)=>n+x.u.attack,0);
+ const mana=me.mana;
+ // State 1: immediate lethal, including taunt clearance if possible.
+ brain.phase='lethal';
+ if(!taunts.length&&totalAttack>=foe.health&&attackers.length)return {type:'face',i:attackers[0].i};
+ // State 2: tactical combat; always consider attacking a taunt, even if not a clean kill.
+ brain.phase='combat';
+ const targets=taunts.length?taunts:foe.board.map((u,i)=>({u,i}));
+ let combat=[];
+ for(const {u:a,i} of attackers){
+  for(const {u:d,i:j} of targets){
+   const kill=d.health<=a.attack,dead=a.health<=d.attack;
+   const effective=Math.min(a.attack,d.health);
+   let score=(kill?aiThreat(d)*style.trade:effective*(taunts.length?1.8:.7))
+     -(dead?aiThreat(a)*.85:a.health>0?d.attack*.3:0)
+     +(taunts.length?5:0)+(kill&&d.taunt?6:0);
+   if(d.attack>=me.health&&kill)score+=9;
+   combat.push({type:'attack',i,target:j,score});
+  }
  }
- if(!taunts.length){const attacker=me.board.findIndex(u=>u.ready);if(attacker>=0)return {type:'face',i:attacker};}
- // If no unit is playable, still use a spell with a useful target.
- for(let i=0;i<me.hand.length;i++){const c=allCards[me.hand[i]];if(c.cost<=me.mana&&c.kind==='spell'){if(c.ability==='damage'&&foe.board.length)return {type:'spell',i,target:Math.max(0,foe.board.findIndex(u=>u.health<=3))};if(c.ability==='heal'&&me.health<=22)return {type:'spell',i};}}
- return null;
+ combat.sort((a,b)=>b.score-a.score);
+ const bestTrade=combat[0];
+ // State 3: prioritize urgent removal and profitable attacks.
+ if(bestTrade&&(taunts.length||bestTrade.score>2.6)&&
+    (bestTrade.score>=-3||taunts.length&&attackers.length))return {type:'attack',i:bestTrade.i,target:bestTrade.target};
+ // State 4: decide which cards to invest. Preserve reserves rather than always spending all mana.
+ brain.phase='develop';
+ const actions=[];
+ const reserve=me.hand.length<=2&&state.turn>3?1:0;
+ for(let i=0;i<me.hand.length;i++){
+  const c=allCards[me.hand[i]];if(!c||c.cost>mana)continue;
+  if(c.kind==='unit'&&me.board.length<7){
+   const boardCount=me.board.length,enemyCount=foe.board.length;
+   let score=c.attack*1.05+c.health*.65-c.cost*.33;
+   if(style.id==='swarm')score+=c.cost<=2?5:0;
+   if(style.id==='fortress')score+=c.ability==='guard'?7:0;
+   if(style.id==='tempo')score+=c.attack>=3?3:0;
+   if(style.id==='value')score+=c.cost>=3?2:-1;
+   if(style.id==='finisher')score+=c.attack*1.3;
+   if(c.ability==='heal'&&me.health<=22)score+=4;
+   if(c.ability==='guard'&&foe.board.length)score+=3;
+   if(boardCount>=4)score-=3+(boardCount-4)*2;
+   if(boardCount>=enemyCount+2)score-=2;
+   if(me.hand.length<=2&&c.cost>=3&&foe.board.length===0)score-=2;
+   if(c.cost===mana)score+=.8;
+   actions.push({type:'unit',i,score});
+  }
+  if(c.kind==='spell'){
+   if(c.ability==='damage'&&foe.board.length){
+    const target=foe.board.reduce((best,u,j)=>aiThreat(u)>aiThreat(foe.board[best])?j:best,0);
+    const u=foe.board[target];
+    actions.push({type:'spell',i,target,score:3+(u.health<=3?aiThreat(u):0)+(u.taunt?5:0)+(style.id==='control'?4:0)});
+   }
+   if(c.ability==='damageall'&&foe.board.length>=2)actions.push({type:'spell',i,score:foe.board.length*3+(style.id==='control'?4:0)});
+   if(c.ability==='heal'&&me.health<=24)actions.push({type:'spell',i,score:(30-me.health)*.75});
+   if(c.ability==='shield'&&me.board.some(u=>!u.taunt)){
+    const target=me.board.reduce((best,u,j)=>u.attack>me.board[best].attack&&!u.taunt?j:best,me.board.findIndex(u=>!u.taunt));
+    actions.push({type:'spell',i,target,score:foe.board.length*1.3+(style.id==='fortress'?6:0)});
+   }
+   if(c.ability==='buff'&&me.board.length){
+    const target=me.board.reduce((best,u,j)=>u.attack>me.board[best].attack?j:best,0);
+    actions.push({type:'spell',i,target,score:me.board[target].ready?7:4});
+   }
+  }
+ }
+ actions.sort((a,b)=>b.score-a.score);
+ // Do not hoard when in danger; do hold cards if dominating or resources are low.
+ const pressured=foe.board.reduce((n,u)=>n+u.attack,0)>=me.health*.35;
+ const boardLead=me.board.length>foe.board.length+1;
+ const threshold=pressured?0:style.hold+(boardLead?2:0)+(me.hand.length<=2?1.5:0)+(brain.plays>=2?brain.plays*.9:0);
+ if(actions.length&&actions[0].score>=threshold&&brain.plays<Math.min(5,style.id==='swarm'?5:3)){
+  brain.plays++;
+  return {type:actions[0].type,i:actions[0].i,target:actions[0].target};
+ }
+ // State 5: clear remaining threats or push hero damage.
+ brain.phase='finish';
+ if(bestTrade&&bestTrade.score>-2)return {type:'attack',i:bestTrade.i,target:bestTrade.target};
+ if(!taunts.length&&attackers.length)return {type:'face',i:attackers[0].i};
+ if(bestTrade&&taunts.length)return {type:'attack',i:bestTrade.i,target:bestTrade.target};
+ brain.phase='pass';return null;
 }
 function executeAI(a){const me=p('enemy'),foe=p('player');
- if(a.type==='unit'){const id=me.hand.splice(a.i,1)[0],c=allCards[id];me.mana-=c.cost;const u={id,attack:c.attack,health:c.health,maxHealth:c.health,ready:false,taunt:c.ability==='guard'};me.board.push(u);triggerBattlecry('enemy',u,c);log(`Zork invocou ${c.name} (${u.attack}/${u.health}).`);state.lastAction='“Uma peça no tabuleiro. Próximo movimento calculado.”';}
+ if(a.type==='unit'){const id=me.hand.splice(a.i,1)[0],c=allCards[id];me.mana-=c.cost;const u={id,attack:c.attack,health:c.health,maxHealth:c.health,ready:false,taunt:c.ability==='guard'};me.board.push(u);triggerBattlecry('enemy',u,c);log(`Zork invocou ${c.name} (${u.attack}/${u.health}).`);state.lastAction='“'+aiBrain.style.name+': consolidando a estratégia.”';}
  if(a.type==='spell'){const id=me.hand[a.i],c=allCards[id];me.hand.splice(a.i,1);me.mana-=c.cost;if(c.ability==='damage'&&a.target!==undefined){damageMinion('player',a.target,3);}else if(c.ability==='buff'||c.ability==='shield'){const u=me.board[a.target]||me.board[0];if(u){if(c.ability==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;}else{u.taunt=true;u.health+=3;u.maxHealth+=3;}}}else resolveSpell('enemy',c,null);log(`Zork usou ${c.name}.`);state.lastAction='“Recursos utilizados com eficiência.”';}
- if(a.type==='attack'){const at=me.board[a.i],de=foe.board[a.target];if(at&&de&&(!foe.board.some(u=>u.taunt)||de.taunt)){de.health-=at.attack;at.health-=de.attack;at.ready=false;log(`Alien ${allCards[at.id].name} atacou ${allCards[de.id].name}.`);cleanup('player');cleanup('enemy');}}
+ if(a.type==='attack'){const at=me.board[a.i],de=foe.board[a.target];if(at&&at.ready&&de&&(!foe.board.some(u=>u.taunt)||de.taunt)){de.health-=at.attack;at.health-=de.attack;at.ready=false;log(`Alien ${allCards[at.id].name} atacou ${allCards[de.id].name}.`);cleanup('player');cleanup('enemy');}}
  if(a.type==='face'){const at=me.board[a.i];if(at&&at.ready&&!foe.board.some(u=>u.taunt)){foe.health-=at.attack;at.ready=false;log(`Zork atacou seu herói com ${allCards[at.id].name}, causando ${at.attack} de dano.`);}}
  checkEnd();
 }

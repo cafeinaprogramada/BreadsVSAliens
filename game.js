@@ -3,10 +3,12 @@ let allCards={}, state={}, selectedCard=null, selectedAttacker=null, targetMode=
 const rand = arr => arr[Math.floor(Math.random()*arr.length)];
 const shuffle = arr => {for(let i=arr.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;};
 const DECK_SIZE=40,MAX_COPIES=3;
+const UNIQUE_BREAD_NAMES=new Set(['Sonho de Blueberry','Sonho de Menta','Vermelhinha']);
+const copyLimit=c=>UNIQUE_BREAD_NAMES.has(c.name)?1:MAX_COPIES;
 function buildDeck(faction){
  const pool=window.CARD_DATA.cards.filter(c=>c.faction===faction);
  const chosen=[],counts={};
- const add=c=>{if(!c||chosen.length>=DECK_SIZE||(counts[c.id]||0)>=MAX_COPIES)return false;chosen.push(c.id);counts[c.id]=(counts[c.id]||0)+1;return true;};
+ const add=c=>{if(!c||chosen.length>=DECK_SIZE||(counts[c.id]||0)>=copyLimit(c))return false;chosen.push(c.id);counts[c.id]=(counts[c.id]||0)+1;return true;};
  const bands=[
   {cards:pool.filter(c=>c.kind==='unit'&&c.cost<=2),count:14},
   {cards:pool.filter(c=>c.kind==='unit'&&c.cost>=3&&c.cost<=4),count:12},
@@ -17,7 +19,7 @@ function buildDeck(faction){
   let n=0,attempts=0;
   const candidates=shuffle([...band.cards]);
   while(n<band.count&&attempts++<250&&candidates.length){
-   const options=candidates.filter(c=>(counts[c.id]||0)<MAX_COPIES);
+   const options=candidates.filter(c=>(counts[c.id]||0)<copyLimit(c));
    if(!options.length)break;
    if(add(rand(options)))n++;
   }
@@ -25,7 +27,7 @@ function buildDeck(faction){
  // Fallback for card pools with too few unique spells or expensive units.
  let tries=0;
  while(chosen.length<DECK_SIZE&&tries++<500){
-  const available=pool.filter(c=>(counts[c.id]||0)<MAX_COPIES);
+  const available=pool.filter(c=>(counts[c.id]||0)<copyLimit(c));
   if(!available.length)break;
   const c=rand(available);
   add(c);
@@ -97,12 +99,12 @@ function inspectCard(c,u,source){
 }
 function renderHand(){
  const hand=$('hand');hand.innerHTML='';
- p('player').hand.forEach((id,i)=>{const c=allCards[id];if(!c)return;const el=document.createElement('div');el.className='card'+(c.cost>p('player').mana||p('player').board.length>=7&&c.kind==='unit'?' disabled':'')+(selectedCard===i?' selected':'');el.title=`${c.name} · ${c.cost} mana\n${c.description}`;el.innerHTML=`<img src="${c.art}" alt=""><span class="card-cost">${c.cost}</span><span class="kind-mark">${c.kind==='spell'?'FEITIÇO':'CRIATURA'}</span><span class="card-name">${escapeHtml(c.name)}</span>${c.kind==='unit'?`<span class="card-stats"><b class="atk">⚔ ${c.attack}</b><b class="hp">♥ ${c.health}</b></span>`:'<span class="spell-mark">✦ EFEITO ✦</span>'}`;el.onclick=()=>playCard(i);el.addEventListener('pointerenter',()=>inspectCard(c,null,el));el.addEventListener('pointerleave',hideInspect);el.addEventListener('focus',()=>inspectCard(c,null,el));el.addEventListener('blur',hideInspect);hand.appendChild(el);});
+ p('player').hand.forEach((id,i)=>{const c=allCards[id];if(!c)return;const el=document.createElement('div');el.className='card'+(c.cost>p('player').mana||p('player').board.length>=7&&c.kind==='unit'?' disabled':'')+(selectedCard===i?' selected':'');el.removeAttribute('title');el.innerHTML=`<img src="${c.art}" alt=""><span class="card-cost">${c.cost}</span><span class="kind-mark">${c.kind==='spell'?'FEITIÇO':'CRIATURA'}</span><span class="card-name">${escapeHtml(c.name)}</span>${c.kind==='unit'?`<span class="card-stats"><b class="atk">⚔ ${c.attack}</b><b class="hp">♥ ${c.health}</b></span>`:'<span class="spell-mark">✦ EFEITO ✦</span>'}`;el.onclick=()=>playCard(i);el.addEventListener('pointerenter',()=>inspectCard(c,null,el));el.addEventListener('pointerleave',hideInspect);el.addEventListener('focus',()=>inspectCard(c,null,el));el.addEventListener('blur',hideInspect);hand.appendChild(el);});
 }
 function renderBoard(side){
  const board=$(side==='player'?'player-board':'enemy-board');board.innerHTML='';const units=p(side).board;
  if(!units.length){board.innerHTML='<span class="empty-board">— CAMPO LIVRE —</span>';return;}
- units.forEach((u,i)=>{const c=allCards[u.id];const el=document.createElement('div');const canAttack=side==='player'&&state.active==='player'&&u.ready&&!state.over;el.className='minion'+(canAttack?' ready':'')+(selectedAttacker===i?' selected':'')+(isTargetable(side,i)?' targetable':'');el.innerHTML=`<img src="${c.art}" alt=""><span class="cost">${c.cost}</span><span class="minion-name">${escapeHtml(c.name)}</span><span class="stat">${u.attack}</span><span class="stat hp">${u.health}</span>${u.taunt?'<span class="taunt">PROVOCAR</span>':''}${u.poison?'<span class="taunt">VENENO</span>':''}${u.rushOnly?'<span class="taunt">INVESTIDA</span>':''}`;el.title=`${c.name}\n${u.attack} ataque / ${u.health} vida${u.taunt?'\nProvocar':''}${u.ready?'\nPronto para atacar':''}`;el.onclick=()=>clickMinion(side,i);el.addEventListener('pointerenter',()=>inspectCard(c,u,el));el.addEventListener('pointerleave',hideInspect);board.appendChild(el);});
+ units.forEach((u,i)=>{const c=allCards[u.id];const el=document.createElement('div');const canAttack=side==='player'&&state.active==='player'&&u.ready&&!state.over;el.className='minion'+(canAttack?' ready':'')+(selectedAttacker===i?' selected':'')+(isTargetable(side,i)?' targetable':'');el.innerHTML=`<img src="${c.art}" alt=""><span class="cost">${c.cost}</span><span class="minion-name">${escapeHtml(c.name)}</span><span class="stat">${u.attack}</span><span class="stat hp">${u.health}</span>${u.taunt?'<span class="taunt">PROVOCAR</span>':''}${u.poison?'<span class="taunt">VENENO</span>':''}${u.rushOnly?'<span class="taunt">INVESTIDA</span>':''}`;el.removeAttribute('title');el.onclick=()=>clickMinion(side,i);el.addEventListener('pointerenter',()=>inspectCard(c,u,el));el.addEventListener('pointerleave',hideInspect);board.appendChild(el);});
 }
 function isTargetable(side,i){if(targetMode==='buff'||targetMode==='shield'||targetMode==='poisonbuff')return side==='player';if(targetMode==='damage')return side==='enemy';if(selectedAttacker!==null)return side==='enemy'&&(!p('enemy').board.some(u=>u.taunt)||p('enemy').board[i].taunt);return false;}
 function playCard(i){
@@ -133,7 +135,7 @@ function giveCard(side,id){const own=p(side);if(!allCards[id])return;if(own.hand
 function applyPoison(attacker,defender,damage){if(attacker?.poison&&damage>0&&defender)defender.health=0;}
 function triggerBattlecry(side,u,c){
  const own=p(side),foe=p(side==='player'?'enemy':'player');
- switch(c.ability){case'heal':own.health=Math.min(30,own.health+2);break;case'healall':own.health=Math.min(30,own.health+3);own.board.forEach(x=>{x.health=Math.min(x.maxHealth,x.health+3)});break;case'healminion':{const hurt=own.board.filter(x=>x!==u&&x.health<x.maxHealth);if(hurt.length){const t=hurt.sort((a,b)=>(a.health/a.maxHealth)-(b.health/b.maxHealth))[0];t.health=Math.min(t.maxHealth,t.health+2);}break;}case'draw':draw(side);break;case'chainMenta':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Sonho de Menta')?.id);break;case'chainVermelhinha':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Vermelhinha')?.id);break;case'twin':if(own.board.length<7){const clone=makeUnit(c);clone.ready=false;own.board.push(clone);log(c.name+' invocou uma cópia!');}break;case'teamBuff':own.board.filter(x=>x!==u).forEach(x=>{x.attack++;x.health++;x.maxHealth++;});break;case'ping':if(c.id==='bread12'){foe.health-=1;}else if(foe.board.length){const t=foe.board.slice().sort((a,b)=>a.health-b.health)[0];damageMinion(side==='player'?'enemy':'player',foe.board.indexOf(t),1);cleanup(side==='player'?'enemy':'player');}else foe.health-=1;break;}
+ switch(c.ability){case'heal':own.health=Math.min(30,own.health+2);break;case'healall':own.health=Math.min(30,own.health+3);own.board.forEach(x=>{x.health=Math.min(x.maxHealth,x.health+3)});break;case'healminion':{const hurt=own.board.filter(x=>x!==u&&x.health<x.maxHealth);if(hurt.length){const t=hurt.sort((a,b)=>(a.health/a.maxHealth)-(b.health/b.maxHealth))[0];t.health=Math.min(t.maxHealth,t.health+2);}break;}case'draw':draw(side);break;case'chainMenta':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Sonho de Menta')?.id);break;case'chainVermelhinha':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Vermelhinha')?.id);break;case'twin':if(own.board.length<7){const clone=makeUnit(c);clone.ready=false;own.board.push(clone);log(c.name+' invocou uma cópia!');}break;case'teamBuff':own.board.filter(x=>x!==u).forEach(x=>{x.attack++;x.health++;x.maxHealth++;});log(c.name+' fortaleceu os outros Pães com +1/+1!');break;case'ping':if(c.id==='bread12'){foe.health-=1;}else if(foe.board.length){const t=foe.board.slice().sort((a,b)=>a.health-b.health)[0];damageMinion(side==='player'?'enemy':'player',foe.board.indexOf(t),1);cleanup(side==='player'?'enemy':'player');}else foe.health-=1;break;}
 }
 function resolveSpell(side,c,target){
  const own=p(side),foe=p(side==='player'?'enemy':'player');

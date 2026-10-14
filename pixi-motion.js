@@ -220,7 +220,7 @@ document.addEventListener('pointerout',e=>{if(e.target.closest('.minion .taunt')
 let previousVisualSnapshot={player:[],enemy:[]};
 let visualSnapshotReady=false;
 const originalRender=render;
-render=function(){originalRender.apply(this,arguments);
+render=function(){if(!state.players)return;originalRender.apply(this,arguments);
  const taunts=p('enemy').board.some(u=>u.taunt);
  for(const side of ['player','enemy']){
  const previous=previousVisualSnapshot[side]||[];
@@ -241,6 +241,6 @@ render=function(){originalRender.apply(this,arguments);
  document.querySelectorAll('#player-board .minion').forEach((el,i)=>el.classList.toggle('tcg-taunt',!!p('player').board[i]?.taunt));
 };
 const originalStart=startGame;
-startGame=function(){previousVisualSnapshot={player:[],enemy:[]};visualSnapshotReady=false;enemyPreviewLock=false;seq++;busy=false;overlay.innerHTML='';if(app)app.stage.removeChildren().forEach(x=>x.destroy());originalStart.apply(this,arguments);banner('PÃES VS ALIENS','UM NOVO DUELO COMEÇA');};
-render();banner(active?'PIXI.JS ATIVO':'MODO COMPATÍVEL','ARRASTE CARTAS PARA JOGAR E ATACAR');
+startGame=function(){previousVisualSnapshot={player:[],enemy:[]};visualSnapshotReady=false;enemyPreviewLock=false;seq++;busy=false;overlay.innerHTML='';if(app)app.stage.removeChildren().forEach(x=>x.destroy());originalStart.apply(this,arguments);banner('DUELO INICIADO',(window.TCGMenu?.name(window.TCGMenu?.match.player)||'Pães')+' VS '+(window.TCGMenu?.name(window.TCGMenu?.match.enemy)||'Aliens'));};
+if(state.players){render();banner(active?'PIXI.JS ATIVO':'MODO COMPATÍVEL','ARRASTE CARTAS PARA JOGAR E ATACAR');}
 })();

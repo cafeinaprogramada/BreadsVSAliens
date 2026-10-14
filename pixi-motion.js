@@ -66,13 +66,13 @@ function sprite(src,pos){
 function remove(s){if(s&&app){app.stage.removeChild(s);s.destroy();}}
 async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
  const a=point(srcEl),b=point(dstEl);if(!a||!b){return;}
- const sp=sprite(srcUrl||cardImg(srcEl),a);
- const fallback=!sp?document.createElement('img'):null;
+ const sp=null; // Do not project card artwork through PIXI: original texture scale can fill the viewport.
+ const fallback=null; // The field-sized DOM ghost below is the only moving card.
  if(fallback){fallback.className='tcg-moving-card';fallback.src=srcUrl||cardImg(srcEl)||'';fallback.style.width=a.w+'px';fallback.style.height=a.h+'px';overlay.appendChild(fallback);}
  const line=active?new P.Graphics():null;
  if(line)app.stage.addChild(line);
  if(srcEl)srcEl.classList.add('tcg-in-flight');
- const attackerGhost=srcEl?.cloneNode(true);if(attackerGhost){attackerGhost.className='tcg-attack-ghost';attackerGhost.style.width=a.w+'px';attackerGhost.style.height=a.h+'px';overlay.appendChild(attackerGhost);srcEl.style.opacity='0.15';}
+ const attackerGhost=srcEl?.cloneNode(true);if(attackerGhost){attackerGhost.removeAttribute('id');attackerGhost.className='tcg-attack-ghost';attackerGhost.style.width=Math.min(a.w,110)+'px';attackerGhost.style.height=Math.min(a.h,140)+'px';attackerGhost.style.maxWidth='110px';attackerGhost.style.maxHeight='140px';attackerGhost.style.position='fixed';attackerGhost.style.left=a.x+'px';attackerGhost.style.top=a.y+'px';attackerGhost.style.transform='translate(-50%,-50%)';overlay.appendChild(attackerGhost);srcEl.style.opacity='0.15';}
  await tween(1650,t=>{
   const arc=Math.sin(Math.PI*t)*-65;
   if(sp){sp.x=a.x+(b.x-a.x)*t;sp.y=a.y+(b.y-a.y)*t+arc;sp.rotation=Math.sin(Math.PI*t)*.12;sp.scale.set(1+Math.sin(Math.PI*t)*.28);}
@@ -94,7 +94,7 @@ function summon(target,srcUrl,origin,special=false){
  if(special){const colors=[0xff4242,0xffaa33,0xffeb48,0x61f5a0,0x5ddaff,0x9b68ff,0xff79d5];colors.forEach((color,i)=>setTimeout(()=>burst(pos,color,22),i*105));target?.classList.add('tcg-rainbow-arrival');setTimeout(()=>target?.classList.remove('tcg-rainbow-arrival'),1900);}else{target?.classList.add('tcg-soft-arrival');setTimeout(()=>target?.classList.remove('tcg-soft-arrival'),1150);if(target?.classList.contains('tcg-taunt')||target?.querySelector('.taunt')?.textContent.includes('PROVOCAR')){target.classList.add('tcg-guard-drop');setTimeout(()=>target.classList.remove('tcg-guard-drop'),1250);}}
  target?.classList.add('tcg-arrival');
  setTimeout(()=>target?.classList.remove('tcg-arrival'),1000);
- if(origin&&srcUrl){const a=point(origin),s=sprite(srcUrl,a);if(s){tween(900,t=>{s.x=a.x+(pos.x-a.x)*t;s.y=a.y+(pos.y-a.y)*t-65*Math.sin(Math.PI*t);s.scale.set(1-t*.25);s.alpha=1-t*.6;}).then(()=>remove(s));}}
+ // The card itself performs its field entrance; no floating full-resolution artwork.
 }
 async function aiAction(choice){
  const side='enemy',src=unit(side,choice.i),dest=choice.type==='attack'?unit('player',choice.target):choice.type==='face'?hero('player'):null;
@@ -119,7 +119,7 @@ playCard=function(i){
  if(c?.kind==='spell'&&p('player').hand.length!==undefined){const buff=['buff','shield','poisonbuff','chargebuff','teamBuff'].includes(c.ability);if(buff)document.querySelectorAll('#player-board .minion').forEach(el=>{el.classList.add('tcg-enchanted');setTimeout(()=>el.classList.remove('tcg-enchanted'),1200);});}
  if(c?.kind==='unit'&&p('player').board.length>before){
   const target=unit('player',before);const special=['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(c.name);summon(target,c.art,null,special);
-  if(origin){const s=sprite(c.art,origin),b=point(target);if(s&&b)tween(880,t=>{s.x=origin.x+(b.x-origin.x)*t;s.y=origin.y+(b.y-origin.y)*t-75*Math.sin(Math.PI*t);s.alpha=1-t*.7;s.scale.set(1-t*.22);}).then(()=>remove(s));}
+  // Summons animate the actual minion card; never enlarge a PIXI artwork sprite.
   banner(special?'✦ INVOCAÇÃO ARCO-ÍRIS ✦':'CRIATURA INVOCADA',c.name);
  }
 };

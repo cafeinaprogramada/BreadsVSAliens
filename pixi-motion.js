@@ -14,7 +14,7 @@ if(P){try{
  window.addEventListener('resize',()=>app.renderer.resize(innerWidth,innerHeight));
 }catch(e){console.warn('PixiJS indisponível; usando animação CSS',e);}}
 const overlay=document.createElement('div');overlay.id='tcg-overlay';document.body.appendChild(overlay);
-function point(el){const r=el?.getBoundingClientRect();return r?{x:r.left+r.width/2,y:r.top+r.height/2,w:r.width,h:r.height}:null;}
+function point(el){if(!el?.isConnected)return null;const r=el.getBoundingClientRect();if(!r.width||!r.height||!Number.isFinite(r.left+r.top))return null;return {x:r.left+r.width/2,y:r.top+r.height/2,w:r.width,h:r.height};}
 const unit=(side,i)=>document.querySelectorAll('#'+(side==='player'?'player-board':'enemy-board')+' .minion')[i];
 const hero=side=>document.getElementById(side==='player'?'player-hero':'enemy-hero');
 const cardImg=el=>el?.querySelector('img')?.getAttribute('src');
@@ -65,7 +65,7 @@ function sprite(src,pos){
 }
 function remove(s){if(s&&app){app.stage.removeChild(s);s.destroy();}}
 async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
- const a=point(srcEl),b=point(dstEl);if(!a||!b){return;}
+ const a=point(srcEl),b=point(dstEl);if(!a||!b){console.warn('Ataque sem alvo visual válido; dano resolvido sem animação.');return;}
  const sp=null; // Do not project card artwork through PIXI: original texture scale can fill the viewport.
  const fallback=null; // The field-sized DOM ghost below is the only moving card.
  if(fallback){fallback.className='tcg-moving-card';fallback.src=srcUrl||cardImg(srcEl)||'';fallback.style.width=a.w+'px';fallback.style.height=a.h+'px';overlay.appendChild(fallback);}
@@ -101,16 +101,40 @@ async function aiAction(choice){
  const a=p('enemy').board[choice.i],d=choice.type==='attack'?p('player').board[choice.target]:null;
  const attack=a?.attack||0,retaliation=d?.attack||0,art=a?allCards[a.id]?.art:null;
  const card=choice.type==='unit'?allCards[p('enemy').hand[choice.i]]:null;
+ if(choice.type==='spell'){
+  const preview=document.getElementById('card-inspect');
+  const spell=allCards[p('enemy').hand[choice.i]];
+  if(preview&&spell){
+   enemyPreviewLock=true;clearTimeout(inspectTimer);
+   preview.replaceChildren();preview.classList.add('inspect-visible','enemy-spell-preview');
+   const image=document.createElement('img');image.src=spell.art;image.alt=spell.name;
+   const name=document.createElement('strong');name.textContent=spell.name;
+   const cost=document.createElement('small');cost.textContent=spell.cost+' MANA · FEITIÇO DE ZORK';
+   const description=document.createElement('p');description.textContent=spell.description||'Feitiço alienígena';
+   preview.append(image,name,cost,description);
+  }
+  await sleep(1300);
+  executeAI(choice);render();
+  if(preview){preview.classList.remove('inspect-visible','enemy-spell-preview');preview.replaceChildren();const placeholder=document.createElement('div');placeholder.className='inspect-placeholder';placeholder.textContent='Passe o cursor sobre uma carta para inspecioná-la.';preview.appendChild(placeholder);}
+  enemyPreviewLock=false;
+  banner('FEITIÇO DE ZORK',spell?spell.name+' — '+(spell.description||'Efeito aplicado'):'Magia alienígena');
+  await sleep(1700);return;
+ }
  if(choice.type==='attack'||choice.type==='face'){
   banner('ATAQUE DE ZORK',allCards[a.id]?.name+' → '+(d?allCards[d.id]?.name:'SEU HERÓI'));
   await sleep(480);await travel(src,dest,art,attack,retaliation);
   executeAI(choice);render();await sleep(200);return;
  }
  executeAI(choice);render();
- if(choice.type==='unit'){summon(unit('enemy',p('enemy').board.length-1),card?.art,null,['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(card?.name));banner('INVOCAÇÃO ALIENÍGENA',card?.name||'');}
- else if(choice.type==='spell')banner('MAGIA ALIENÍGENA','Zork lançou um feitiço');
+ if(choice.type==='unit'){banner('INVOCAÇÃO ALIENÍGENA',card?.name||'');}
+ 
  await sleep(1500);
 }
+let enemyPreviewLock=false;
+const originalInspect=inspectCard;
+inspectCard=function(){if(enemyPreviewLock)return;return originalInspect.apply(this,arguments);};
+const originalHideInspect=hideInspect;
+hideInspect=function(){if(enemyPreviewLock)return;return originalHideInspect.apply(this,arguments);};
 const originalPlay=playCard;
 playCard=function(i){
  if(busy)return;
@@ -118,7 +142,7 @@ playCard=function(i){
  originalPlay.apply(this,arguments);
  if(c?.kind==='spell'&&p('player').hand.length!==undefined){const buff=['buff','shield','poisonbuff','chargebuff','teamBuff'].includes(c.ability);if(buff)document.querySelectorAll('#player-board .minion').forEach(el=>{el.classList.add('tcg-enchanted');setTimeout(()=>el.classList.remove('tcg-enchanted'),1200);});}
  if(c?.kind==='unit'&&p('player').board.length>before){
-  const target=unit('player',before);const special=['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(c.name);summon(target,c.art,null,special);
+  const special=['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(c.name);
   // Summons animate the actual minion card; never enlarge a PIXI artwork sprite.
   banner(special?'✦ INVOCAÇÃO ARCO-ÍRIS ✦':'CRIATURA INVOCADA',c.name);
  }
@@ -195,12 +219,15 @@ const info=document.createElement('div');info.id='tcg-rule-tip';info.textContent
 document.addEventListener('pointerover',e=>{const t=e.target.closest('.minion .taunt');if(t){info.classList.add('visible');const r=t.getBoundingClientRect();info.style.left=Math.min(innerWidth-310,Math.max(8,r.left))+'px';info.style.top=Math.max(8,r.top-108)+'px';}});
 document.addEventListener('pointerout',e=>{if(e.target.closest('.minion .taunt'))info.classList.remove('visible');});
 let previousVisualSnapshot={player:[],enemy:[]};
+let visualSnapshotReady=false;
 const originalRender=render;
 render=function(){originalRender.apply(this,arguments);
  const taunts=p('enemy').board.some(u=>u.taunt);
  for(const side of ['player','enemy']){
  const previous=previousVisualSnapshot[side]||[];
  document.querySelectorAll('#'+side+'-board .minion').forEach((el,i)=>{
+  const fresh=visualSnapshotReady&&(i>=previous.length||previous[i]?.id!==p(side).board[i]?.id);
+  if(fresh){const card=allCards[p(side).board[i].id];summon(el,card?.art,null,['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(card?.name));}
   const u=p(side).board[i],old=previous[i];el.classList.toggle('tcg-poison-aura',!!u?.poison);
   if(old&&old.id===u?.id){
    if(u.health<old.health){el.classList.add('tcg-red-hit');setTimeout(()=>el.classList.remove('tcg-red-hit'),1400);}
@@ -209,11 +236,12 @@ render=function(){originalRender.apply(this,arguments);
  });
  previousVisualSnapshot[side]=p(side).board.map(u=>({...u}));
 }
+ visualSnapshotReady=true;
  document.getElementById('enemy-hero')?.classList.toggle('tcg-legal-target',selectedAttacker!==null&&!taunts);
  document.querySelectorAll('#enemy-board .minion').forEach((el,i)=>{el.classList.toggle('tcg-legal-target',selectedAttacker!==null&&(!taunts||p('enemy').board[i].taunt));el.classList.toggle('tcg-taunt',!!p('enemy').board[i]?.taunt);});
  document.querySelectorAll('#player-board .minion').forEach((el,i)=>el.classList.toggle('tcg-taunt',!!p('player').board[i]?.taunt));
 };
 const originalStart=startGame;
-startGame=function(){previousVisualSnapshot={player:[],enemy:[]};seq++;busy=false;overlay.innerHTML='';if(app)app.stage.removeChildren().forEach(x=>x.destroy());originalStart.apply(this,arguments);banner('PÃES VS ALIENS','UM NOVO DUELO COMEÇA');};
+startGame=function(){previousVisualSnapshot={player:[],enemy:[]};visualSnapshotReady=false;enemyPreviewLock=false;seq++;busy=false;overlay.innerHTML='';if(app)app.stage.removeChildren().forEach(x=>x.destroy());originalStart.apply(this,arguments);banner('PÃES VS ALIENS','UM NOVO DUELO COMEÇA');};
 render();banner(active?'PIXI.JS ATIVO':'MODO COMPATÍVEL','ARRASTE CARTAS PARA JOGAR E ATACAR');
 })();

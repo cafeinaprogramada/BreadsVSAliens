@@ -34,6 +34,7 @@ function buildDeck(faction){
 }
 function boot(){const data=window.CARD_DATA;allCards=Object.fromEntries(data.cards.map(c=>[c.id,c]));window.deckData=data.decks;startGame();}
 function startGame(){
+ if(typeof hideInspect==='function')hideInspect();
  state={turn:1,active:'player',over:false,players:{player:{health:30,maxMana:0,mana:0,deck:buildDeck('bread'),graveyard:[],hand:[],board:[],fatigue:0},enemy:{health:30,maxMana:0,mana:0,deck:buildDeck('alien'),graveyard:[],hand:[],board:[],fatigue:0}},logs:[],lastAction:''};
  selectedCard=null;selectedAttacker=null;targetMode=null;aiBusy=false;
  for(let i=0;i<3;i++) draw('player'); for(let i=0;i<4;i++) draw('enemy');
@@ -68,15 +69,40 @@ function render(){
  $('action-help').textContent=targetMode==='poisonbuff'?'Escolha um Pão para receber Toque Venenoso.':targetMode==='buff'?'Selecione uma criatura aliada.':targetMode==='shield'?'Selecione um aliado para receber Provocar.':targetMode==='damage'?'Selecione uma criatura inimiga para receber 3 de dano.':selectedAttacker!==null?'Clique ou arraste até uma criatura inimiga ou o herói alienígena.':'Jogue cartas, ataque e encerre o turno.';
  $('ai-thought').textContent=state.active==='enemy'?'“Calculando probabilidades de vitória...”':state.lastAction||'“Analisando formas de vida...”';
 }
-function inspectCard(c,u){const preview=$('card-inspect');if(!preview||!c)return;preview.innerHTML='';const img=document.createElement('img');img.src=c.art;img.alt=c.name;const name=document.createElement('strong');name.textContent=c.name;const desc=document.createElement('p');desc.textContent=c.description||'Sem efeito especial.';const stats=document.createElement('small');stats.textContent=c.cost+' MANA · '+(c.kind==='spell'?'FEITIÇO':(u?u.attack:c.attack)+' ATQ / '+(u?u.health:c.health)+' VIDA');preview.append(img,name,stats,desc);}
+let inspectTimer=null,inspectSource=null;
+function hideInspect(){
+ clearTimeout(inspectTimer);inspectTimer=null;inspectSource=null;
+ const preview=$('card-inspect');if(preview){preview.classList.remove('inspect-visible');preview.innerHTML='<div class="inspect-placeholder">Passe o cursor sobre uma carta por 2 segundos para conhecer seus atributos.</div>';}
+}
+function inspectCard(c,u,source){
+ clearTimeout(inspectTimer);
+ const preview=$('card-inspect');
+ if(!preview||!c)return;
+ inspectSource=source||null;
+ preview.classList.remove('inspect-visible');
+ inspectTimer=setTimeout(()=>{
+  if(source&&!source.isConnected)return;
+  preview.innerHTML='';
+  const img=document.createElement('img');img.src=c.art;img.alt=c.name;
+  const name=document.createElement('strong');name.textContent=c.name;
+  const desc=document.createElement('p');desc.textContent=c.description||'Sem efeito especial.';
+  const stats=document.createElement('small');stats.textContent=c.cost+' MANA · '+(c.kind==='spell'?'FEITIÇO':(u?u.attack:c.attack)+' ATQ / '+(u?u.health:c.health)+' VIDA');
+  const trait=document.createElement('em');
+  const traits={guard:'PROVOCAR',poison:'TOQUE VENENOSO',rush:'INVESTIDA',charge:'ATAQUE IMEDIATO',twin:'CÓPIA AO INVOCAR',draw:'COMPRA DE CARTA',revive:'RESSURREIÇÃO',shield:'ESCUDO'};
+  const label=(u?.poison?'TOQUE VENENOSO':u?.taunt?'PROVOCAR':traits[c.ability])||'';
+  trait.textContent=label;trait.hidden=!label;
+  preview.append(img,name,stats,trait,desc);
+  preview.classList.add('inspect-visible');
+ },2000);
+}
 function renderHand(){
  const hand=$('hand');hand.innerHTML='';
- p('player').hand.forEach((id,i)=>{const c=allCards[id];if(!c)return;const el=document.createElement('div');el.className='card'+(c.cost>p('player').mana||p('player').board.length>=7&&c.kind==='unit'?' disabled':'')+(selectedCard===i?' selected':'');el.title=`${c.name} · ${c.cost} mana\n${c.description}`;el.innerHTML=`<img src="${c.art}" alt=""><span class="card-cost">${c.cost}</span><span class="kind-mark">${c.kind==='spell'?'FEITIÇO':'CRIATURA'}</span><span class="card-name">${escapeHtml(c.name)}</span>${c.kind==='unit'?`<span class="card-stats"><b class="atk">⚔ ${c.attack}</b><b class="hp">♥ ${c.health}</b></span>`:'<span class="spell-mark">✦ EFEITO ✦</span>'}`;el.onclick=()=>playCard(i);el.addEventListener('pointerenter',()=>inspectCard(c));el.addEventListener('focus',()=>inspectCard(c));hand.appendChild(el);});
+ p('player').hand.forEach((id,i)=>{const c=allCards[id];if(!c)return;const el=document.createElement('div');el.className='card'+(c.cost>p('player').mana||p('player').board.length>=7&&c.kind==='unit'?' disabled':'')+(selectedCard===i?' selected':'');el.title=`${c.name} · ${c.cost} mana\n${c.description}`;el.innerHTML=`<img src="${c.art}" alt=""><span class="card-cost">${c.cost}</span><span class="kind-mark">${c.kind==='spell'?'FEITIÇO':'CRIATURA'}</span><span class="card-name">${escapeHtml(c.name)}</span>${c.kind==='unit'?`<span class="card-stats"><b class="atk">⚔ ${c.attack}</b><b class="hp">♥ ${c.health}</b></span>`:'<span class="spell-mark">✦ EFEITO ✦</span>'}`;el.onclick=()=>playCard(i);el.addEventListener('pointerenter',()=>inspectCard(c,null,el));el.addEventListener('pointerleave',hideInspect);el.addEventListener('focus',()=>inspectCard(c,null,el));el.addEventListener('blur',hideInspect);hand.appendChild(el);});
 }
 function renderBoard(side){
  const board=$(side==='player'?'player-board':'enemy-board');board.innerHTML='';const units=p(side).board;
  if(!units.length){board.innerHTML='<span class="empty-board">— CAMPO LIVRE —</span>';return;}
- units.forEach((u,i)=>{const c=allCards[u.id];const el=document.createElement('div');const canAttack=side==='player'&&state.active==='player'&&u.ready&&!state.over;el.className='minion'+(canAttack?' ready':'')+(selectedAttacker===i?' selected':'')+(isTargetable(side,i)?' targetable':'');el.innerHTML=`<img src="${c.art}" alt=""><span class="cost">${c.cost}</span><span class="minion-name">${escapeHtml(c.name)}</span><span class="stat">${u.attack}</span><span class="stat hp">${u.health}</span>${u.taunt?'<span class="taunt">PROVOCAR</span>':''}${u.poison?'<span class="taunt">VENENO</span>':''}${u.rushOnly?'<span class="taunt">INVESTIDA</span>':''}`;el.title=`${c.name}\n${u.attack} ataque / ${u.health} vida${u.taunt?'\nProvocar':''}${u.ready?'\nPronto para atacar':''}`;el.onclick=()=>clickMinion(side,i);el.addEventListener('pointerenter',()=>inspectCard(c,u));board.appendChild(el);});
+ units.forEach((u,i)=>{const c=allCards[u.id];const el=document.createElement('div');const canAttack=side==='player'&&state.active==='player'&&u.ready&&!state.over;el.className='minion'+(canAttack?' ready':'')+(selectedAttacker===i?' selected':'')+(isTargetable(side,i)?' targetable':'');el.innerHTML=`<img src="${c.art}" alt=""><span class="cost">${c.cost}</span><span class="minion-name">${escapeHtml(c.name)}</span><span class="stat">${u.attack}</span><span class="stat hp">${u.health}</span>${u.taunt?'<span class="taunt">PROVOCAR</span>':''}${u.poison?'<span class="taunt">VENENO</span>':''}${u.rushOnly?'<span class="taunt">INVESTIDA</span>':''}`;el.title=`${c.name}\n${u.attack} ataque / ${u.health} vida${u.taunt?'\nProvocar':''}${u.ready?'\nPronto para atacar':''}`;el.onclick=()=>clickMinion(side,i);el.addEventListener('pointerenter',()=>inspectCard(c,u,el));el.addEventListener('pointerleave',hideInspect);board.appendChild(el);});
 }
 function isTargetable(side,i){if(targetMode==='buff'||targetMode==='shield'||targetMode==='poisonbuff')return side==='player';if(targetMode==='damage')return side==='enemy';if(selectedAttacker!==null)return side==='enemy'&&(!p('enemy').board.some(u=>u.taunt)||p('enemy').board[i].taunt);return false;}
 function playCard(i){

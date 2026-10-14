@@ -9,11 +9,12 @@
 <link rel="stylesheet" href="arena-v06.css?v=07">
 <link rel="stylesheet" href="arena-v07.css?v=07">
 <link rel="stylesheet" href="arena-v08.css?v=0801">
+<link rel="stylesheet" href="arena-v09.css?v=0901">
 </head>
 <body>
 <div class="app">
 <main class="table">
-  <div class="statusline"><span id="round-label">BATALHA 01</span><span id="status">A torre começou. Boa sorte, Pãozudo.</span><span id="deck-count">DECKS 40 / 40</span></div>
+  <div class="statusline"><span id="status">A torre começou. Boa sorte, Pãozudo.</span><span id="deck-count" hidden>DECKS 40 / 40</span></div>
   <div class="duel-layout">
     <aside class="inspect-panel">
       <div class="inspect-heading">✦ INSPEÇÃO DE CARTAS</div>
@@ -46,7 +47,7 @@
           <div class="hero-portrait bread-portrait">🥖</div>
           <div class="hero-info"><b>VOCÊ · MESTRE DOS PÃES</b><span>Resistência da Padaria</span></div>
           <div class="health"><span>♥</span><strong id="player-health">30</strong></div>
-          <div class="hero-mana" id="player-mana">1 / 1 MANA</div>
+          <div class="hero-mana" id="player-mana" hidden>1 / 1 MANA</div>
           
         </div>
         <div class="player-help"><b id="action-title">Sua vez de agir</b><span id="action-help">Jogue cartas, ataque e encerre o turno.</span></div>
@@ -58,15 +59,15 @@
     </div>
     <aside class="arena-rail">
       <div class="rail-deck enemy-rail"><div class="enemy-card-stack" title="Baralho alienígena"><div class="deck-symbol">✦</div><small>BARALHO ZORK</small></div><span id="enemy-deck-number">40 / 40</span></div>
-      <div class="rail-turn"><button id="end-turn" class="end-turn">ENCERRAR TURNO <span>➜</span></button><div id="ai-thought" class="rail-ai">“Analisando formas de vida...”</div></div>
+      <div class="rail-turn"><span id="round-label" class="rail-round-label">TURNO 01</span><button id="end-turn" class="end-turn">ENCERRAR TURNO <span>➜</span></button><div id="ai-thought" class="rail-ai">“Analisando formas de vida...”</div></div>
       <div class="rail-deck player-rail"><div class="player-card-stack"><div class="deck-symbol">🍞</div><small>BARALHO PÃES</small></div><span id="player-deck-number">40 / 40</span></div>
     </aside>
   </div>
 </main>
-<footer><span>BUILD 0.8.1 · CARTAS EM ESCALA REAL</span><span>As estatísticas serão rebalanceadas com você.</span><span id="log-toggle" tabindex="0">REGISTRO DE COMBATE ▾</span></footer>
+<footer><span>BUILD 0.9 · FEITIÇOS REVELADOS</span><span>As estatísticas serão rebalanceadas com você.</span><span id="log-toggle" tabindex="0">REGISTRO DE COMBATE ▾</span></footer>
 <div id="log" class="combat-log"></div>
 <div id="modal" class="modal hidden"><div class="modal-card"><div class="modal-symbol" id="modal-symbol">🏆</div><h2 id="modal-title">Vitória!</h2><p id="modal-text"></p><button id="modal-restart" class="end-turn">JOGAR NOVAMENTE ↻</button></div></div>
 <div id="toast" class="toast"></div><button id="restart" class="small-btn restart-floating" title="Reiniciar duelo">↻ Reiniciar duelo</button>
 </div>
-<script src="cards-data.js?v=0801"></script><script src="game.js?v=0801"></script><script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.3/dist/pixi.min.js"></script><script src="pixi-motion.js?v=081"></script>
+<script src="cards-data.js?v=0801"></script><script src="game.js?v=0801"></script><script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.3/dist/pixi.min.js"></script><script src="pixi-motion.js?v=0901"></script>
 </body></html>

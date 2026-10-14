@@ -68,7 +68,7 @@ function render(){
  const gems=$('mana-gems');gems.innerHTML='';for(let i=0;i<p('player').maxMana;i++){const g=document.createElement('i');g.className='gem'+(i<p('player').mana?' full':'');g.classList.add('gem');gems.appendChild(g);}
  renderHand();renderBoard('player');renderBoard('enemy');
  $('action-title').textContent=targetMode?'Escolha um alvo':selectedAttacker!==null?'Escolha o alvo do ataque':'Sua vez de agir';
- $('action-help').textContent=targetMode==='poisonbuff'?'Escolha um Pão para receber Toque Venenoso.':targetMode==='buff'?'Selecione uma criatura aliada.':targetMode==='shield'?'Selecione um aliado para receber Provocar.':targetMode==='damage'?'Selecione uma criatura inimiga para receber 3 de dano.':selectedAttacker!==null?'Clique ou arraste até uma criatura inimiga ou o herói alienígena.':'Jogue cartas, ataque e encerre o turno.';
+ $('action-help').textContent=targetMode==='chargebuff'?'Escolha um Pão para receber Investida.':targetMode==='poisonbuff'?'Escolha um Pão para receber Toque Venenoso.':targetMode==='buff'?'Selecione uma criatura aliada.':targetMode==='shield'?'Selecione um aliado para receber Provocar.':targetMode==='damage'?'Selecione uma criatura inimiga para receber 3 de dano.':selectedAttacker!==null?'Clique ou arraste até uma criatura inimiga ou o herói alienígena.':'Jogue cartas, ataque e encerre o turno.';
  $('ai-thought').textContent=state.active==='enemy'?'“Calculando probabilidades de vitória...”':state.lastAction||'“Analisando formas de vida...”';
 }
 let inspectTimer=null,inspectSource=null;
@@ -90,7 +90,7 @@ function inspectCard(c,u,source){
   const desc=document.createElement('p');desc.textContent=c.description||'Sem efeito especial.';
   const stats=document.createElement('small');stats.textContent=c.cost+' MANA · '+(c.kind==='spell'?'FEITIÇO':(u?u.attack:c.attack)+' ATQ / '+(u?u.health:c.health)+' VIDA');
   const trait=document.createElement('em');
-  const traits={guard:'PROVOCAR',poison:'TOQUE VENENOSO',rush:'INVESTIDA',charge:'ATAQUE IMEDIATO',twin:'CÓPIA AO INVOCAR',draw:'COMPRA DE CARTA',revive:'RESSURREIÇÃO',shield:'ESCUDO'};
+  const traits={chargebuff:'CONCEDE INVESTIDA',guard:'PROVOCAR',poison:'TOQUE VENENOSO',rush:'INVESTIDA',charge:'ATAQUE IMEDIATO',twin:'CÓPIA AO INVOCAR',draw:'COMPRA DE CARTA',revive:'RESSURREIÇÃO',shield:'ESCUDO'};
   const label=(u?.poison?'TOQUE VENENOSO':u?.taunt?'PROVOCAR':traits[c.ability])||'';
   trait.textContent=label;trait.hidden=!label;
   preview.append(img,name,stats,trait,desc);
@@ -106,14 +106,14 @@ function renderBoard(side){
  if(!units.length){board.innerHTML='<span class="empty-board">— CAMPO LIVRE —</span>';return;}
  units.forEach((u,i)=>{const c=allCards[u.id];const el=document.createElement('div');const canAttack=side==='player'&&state.active==='player'&&u.ready&&!state.over;el.className='minion'+(canAttack?' ready':'')+(selectedAttacker===i?' selected':'')+(isTargetable(side,i)?' targetable':'');el.innerHTML=`<img src="${c.art}" alt=""><span class="cost">${c.cost}</span><span class="minion-name">${escapeHtml(c.name)}</span><span class="stat">${u.attack}</span><span class="stat hp">${u.health}</span>${u.taunt?'<span class="taunt">PROVOCAR</span>':''}${u.poison?'<span class="taunt">VENENO</span>':''}${u.rushOnly?'<span class="taunt">INVESTIDA</span>':''}`;el.removeAttribute('title');el.onclick=()=>clickMinion(side,i);el.addEventListener('pointerenter',()=>inspectCard(c,u,el));el.addEventListener('pointerleave',hideInspect);board.appendChild(el);});
 }
-function isTargetable(side,i){if(targetMode==='buff'||targetMode==='shield'||targetMode==='poisonbuff')return side==='player';if(targetMode==='damage')return side==='enemy';if(selectedAttacker!==null)return side==='enemy'&&(!p('enemy').board.some(u=>u.taunt)||p('enemy').board[i].taunt);return false;}
+function isTargetable(side,i){if(['buff','shield','poisonbuff','chargebuff'].includes(targetMode))return side==='player';if(targetMode==='damage')return side==='enemy';if(selectedAttacker!==null)return side==='enemy'&&(!p('enemy').board.some(u=>u.taunt)||p('enemy').board[i].taunt);return false;}
 function playCard(i){
  if(state.over||state.active!=='player'||aiBusy||window.TCGMotion?.busy)return;const id=p('player').hand[i],c=allCards[id];if(!c)return;if(c.cost>p('player').mana){toast('Mana insuficiente!');return;}
  if(c.cost>p('player').mana){toast('Mana insuficiente!');return;}
  if(c.kind==='unit'&&p('player').board.length>=7){toast('Seu campo já tem 7 criaturas.');return;}
  if(c.ability==='revive'&&!p('player').graveyard.length){toast('Nenhum Pão derrotado para recuperar.');return;}
- if(c.kind==='spell'&&['buff','shield','damage','poisonbuff'].includes(c.ability)){
-  const ownTarget=['buff','shield','poisonbuff'].includes(c.ability);
+ if(c.kind==='spell'&&['buff','shield','damage','poisonbuff','chargebuff'].includes(c.ability)){
+  const ownTarget=['buff','shield','poisonbuff','chargebuff'].includes(c.ability);
   if(!(ownTarget?p('player').board.length:p('enemy').board.length)){toast(ownTarget?'Você precisa ter um Pão no campo para usar este feitiço.':'Você precisa de um alvo inimigo para usar este feitiço.');return;}
   selectedCard=i;targetMode=c.ability;selectedAttacker=null;setStatus('Escolha o alvo destacado no campo.');render();return;}
  p('player').mana-=c.cost;p('player').hand.splice(i,1);
@@ -124,7 +124,7 @@ function playCard(i){
 function clickMinion(side,i){
  if(state.over||state.active!=='player'||aiBusy||window.TCGMotion?.busy)return;
  if(targetMode){const c=allCards[p('player').hand[selectedCard]];if(!c)return;
-   if((targetMode==='buff'||targetMode==='shield'||targetMode==='poisonbuff')&&side==='player'){p('player').mana-=c.cost;p('player').hand.splice(selectedCard,1);const u=p('player').board[i];if(targetMode==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;log(`${c.name} fortaleceu ${allCards[u.id].name} em +2/+2.`);}else if(targetMode==='poisonbuff'){u.poison=true;log(c.name+' concedeu Toque Venenoso a '+allCards[u.id].name+'.');}else{u.taunt=true;u.health+=3;u.maxHealth+=3;log(`${c.name} protegeu ${allCards[u.id].name} com +3 de vida e Provocar.`);}targetMode=null;selectedCard=null;render();return;}
+   if(['buff','shield','poisonbuff','chargebuff'].includes(targetMode)&&side==='player'){p('player').mana-=c.cost;p('player').hand.splice(selectedCard,1);const u=p('player').board[i];if(targetMode==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;log(`${c.name} fortaleceu ${allCards[u.id].name} em +2/+2.`);}else if(targetMode==='poisonbuff'){u.poison=true;log(c.name+' concedeu Toque Venenoso a '+allCards[u.id].name+'.');}else if(targetMode==='chargebuff'){u.ready=true;u.rushOnly=true;log(c.name+' concedeu Investida a '+allCards[u.id].name+'.');}else{u.taunt=true;u.health+=3;u.maxHealth+=3;log(`${c.name} protegeu ${allCards[u.id].name} com +3 de vida e Provocar.`);}targetMode=null;selectedCard=null;render();return;}
    if(targetMode==='damage'&&side==='enemy'){p('player').mana-=c.cost;p('player').hand.splice(selectedCard,1);damageMinion('enemy',i,3);log(`${c.name} causou 3 de dano a ${allCards[p('enemy').board[i]?.id||'alien1']?.name||'uma criatura'}.`);targetMode=null;selectedCard=null;cleanup('enemy');render();checkEnd();return;}
  }
  if(selectedAttacker!==null){if(side==='enemy'){if(p('enemy').board.some(u=>u.taunt)&&!p('enemy').board[i].taunt){toast('PROVOCAR: ataque primeiro a criatura com Provocar!');return;}const attacker=selectedAttacker;selectedAttacker=null;attackMinion(attacker,i);render();return;} }
@@ -146,7 +146,7 @@ function resolveSpell(side,c,target){
  case'teamBuff':own.board.forEach(u=>{u.attack++;u.health++;u.maxHealth++;});break;
  case'damage':if(target!==null)damageMinion(side==='player'?'enemy':'player',target,3);break;
  case'damageall':foe.board.forEach(u=>u.health-=2);cleanup(side==='player'?'enemy':'player');break;
- case'buff':case'shield':case'poisonbuff':break;
+ case'buff':case'shield':case'poisonbuff':case'chargebuff':break;
  }
 }
 function damageMinion(side,i,n){const u=p(side).board[i];if(!u)return;u.health-=n;if(u.health<=0){log(`${allCards[u.id].name} foi derrotado.`);p(side).graveyard.push(u.id);p(side).board.splice(i,1);}else log(`${allCards[u.id].name} recebeu ${n} de dano.`);}
@@ -236,7 +236,7 @@ function chooseAIAction(){
    if(style.id==='tempo')score+=c.attack>=3?3:0;
    if(style.id==='value')score+=c.cost>=3?2:-1;
    if(style.id==='finisher')score+=c.attack*1.3;
-   if(c.ability==='heal'&&me.health<=22)score+=4;
+   if(['heal','healall'].includes(c.ability)&&me.health<=24)score+=Math.min(16,(30-me.health)*1.5);
    if(c.ability==='twin'&&me.board.length<=5)score+=5;
    if(c.ability==='chainMenta'||c.ability==='chainVermelhinha')score+=me.hand.length<=7?4:0;
    if(c.ability==='poison'&&foe.board.some(u=>u.health>=4))score+=5;
@@ -256,6 +256,7 @@ function chooseAIAction(){
    }
    if(c.ability==='damageall'&&foe.board.length>=2)actions.push({type:'spell',i,score:foe.board.length*3+(style.id==='control'?4:0)});
    if(c.ability==='heal'&&me.health<=24)actions.push({type:'spell',i,score:(30-me.health)*.75});
+   if(c.ability==='chargebuff'&&me.board.some(u=>!u.ready)){const target=me.board.findIndex(u=>!u.ready);actions.push({type:'spell',i,target,score:5+(foe.board.length?4:0)});}
    if(c.ability==='poisonbuff'&&me.board.some(u=>!u.poison)){const target=me.board.findIndex(u=>!u.poison);actions.push({type:'spell',i,target,score:4+(foe.board.length?4:0)});}
    if(c.ability==='draw2'&&me.hand.length<=6&&me.deck.length>=2)actions.push({type:'spell',i,score:6});
    if(c.ability==='revive'&&me.graveyard.length&&me.hand.length<8)actions.push({type:'spell',i,score:6});
@@ -288,7 +289,7 @@ function chooseAIAction(){
 }
 function executeAI(a){const me=p('enemy'),foe=p('player');
  if(a.type==='unit'){const id=me.hand.splice(a.i,1)[0],c=allCards[id];me.mana-=c.cost;const u=makeUnit(c);me.board.push(u);triggerBattlecry('enemy',u,c);log(`Zork invocou ${c.name} (${u.attack}/${u.health}).`);state.lastAction='“'+aiBrain.style.name+': consolidando a estratégia.”';}
- if(a.type==='spell'){const id=me.hand[a.i],c=allCards[id];me.hand.splice(a.i,1);me.mana-=c.cost;if(c.ability==='damage'&&a.target!==undefined){damageMinion('player',a.target,3);}else if(c.ability==='buff'||c.ability==='shield'||c.ability==='poisonbuff'){const u=me.board[a.target]||me.board[0];if(u){if(c.ability==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;}else if(c.ability==='poisonbuff'){u.poison=true;}else{u.taunt=true;u.health+=3;u.maxHealth+=3;}}}else resolveSpell('enemy',c,null);log(`Zork usou ${c.name}.`);state.lastAction='“Recursos utilizados com eficiência.”';}
+ if(a.type==='spell'){const id=me.hand[a.i],c=allCards[id];me.hand.splice(a.i,1);me.mana-=c.cost;if(c.ability==='damage'&&a.target!==undefined){damageMinion('player',a.target,3);}else if(c.ability==='buff'||c.ability==='shield'||c.ability==='poisonbuff'||c.ability==='chargebuff'){const u=me.board[a.target]||me.board[0];if(u){if(c.ability==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;}else if(c.ability==='poisonbuff'){u.poison=true;}else if(c.ability==='chargebuff'){u.ready=true;u.rushOnly=true;}else{u.taunt=true;u.health+=3;u.maxHealth+=3;}}}else resolveSpell('enemy',c,null);log(`Zork usou ${c.name}.`);state.lastAction='“Recursos utilizados com eficiência.”';}
  if(a.type==='attack'){const at=me.board[a.i],de=foe.board[a.target];if(at&&at.ready&&de&&(!foe.board.some(u=>u.taunt)||de.taunt)){de.health-=at.attack;at.health-=de.attack;applyPoison(at,de,at.attack);applyPoison(de,at,de.attack);at.ready=false;log(`Alien ${allCards[at.id].name} atacou ${allCards[de.id].name}.`);cleanup('player');cleanup('enemy');}}
  if(a.type==='face'){const at=me.board[a.i];if(at&&at.ready&&!at.rushOnly&&!foe.board.some(u=>u.taunt)){foe.health-=at.attack;at.ready=false;log(`Zork atacou seu herói com ${allCards[at.id].name}, causando ${at.attack} de dano.`);}}
  checkEnd();

@@ -14,34 +14,59 @@
   <div class="top-actions"><span class="pill" id="turn-label">SEU TURNO</span><button id="restart" class="small-btn">↻ Reiniciar duelo</button></div>
 </header>
 <main class="table">
-  <div class="statusline"><span id="round-label">BATALHA 01</span><span id="status">A torre começou. Boa sorte, Pãozudo.</span><span id="deck-count">DECKS 24 / 24</span></div>
-  <section class="hero-row enemy">
-    <div class="hero-card enemy-hero" id="enemy-hero" data-target="enemyHero">
-      <div class="hero-portrait alien-portrait">👽</div><div class="hero-info"><b>COMANDANTE ZORK</b><span>Invasores da Nebulosa</span></div>
-      <div class="health"><span>♥</span><strong id="enemy-health">30</strong></div>
-      <div class="hero-mana" id="enemy-mana">0 / 0 MANA</div>
+  <div class="statusline"><span id="round-label">BATALHA 01</span><span id="status">A torre começou. Boa sorte, Pãozudo.</span><span id="deck-count">DECKS 40 / 40</span></div>
+  <div class="duel-layout">
+    <aside class="inspect-panel">
+      <div class="inspect-heading">✦ INSPEÇÃO DE CARTAS</div>
+      <div id="card-inspect" class="card-inspect"><div class="inspect-placeholder">Passe o cursor sobre uma carta para ver sua arte, atributos e habilidade.</div></div>
+      <div class="inspect-foot">Passe o cursor sobre as cartas da mão ou do campo.</div>
+    </aside>
+    <div class="arena-main">
+      <section class="hero-row enemy">
+        <div class="hero-card enemy-hero" id="enemy-hero" data-target="enemyHero">
+          <div class="hero-portrait alien-portrait">👽</div>
+          <div class="hero-info"><b>COMANDANTE ZORK</b><span>Invasores da Nebulosa</span></div>
+          <div class="health"><span>♥</span><strong id="enemy-health">30</strong></div>
+          <div class="hero-mana" id="enemy-mana">0 / 0 MANA</div>
+          <div class="heart-meter"><div class="heart-meter-fill" id="enemy-health-fill"></div></div>
+          <small class="heart-meter-label" id="enemy-health-label">30 / 30</small>
+        </div>
+        <div class="enemy-hand-display">
+          <div id="enemy-deck-visual" class="enemy-hand-backs"></div>
+          <span id="enemy-hand-number">4 CARTAS NA MÃO</span>
+        </div>
+      </section>
+      <div class="battlefield">
+        <div class="lane-label"><span>ESQUADRÃO ALIENÍGENA</span><span id="enemy-board-count">0 / 7</span></div>
+        <div id="enemy-board" class="board"></div>
+        <div class="center-divider"><span>✦</span><small>CAMPO DE BATALHA</small><span>✦</span></div>
+        <div id="player-board" class="board"></div>
+        <div class="lane-label player-lane"><span>SEU ESQUADRÃO · PÃES</span><span id="player-board-count">0 / 7</span></div>
+      </div>
+      <section class="hero-row player">
+        <div class="hero-card player-hero" id="player-hero" data-target="playerHero">
+          <div class="hero-portrait bread-portrait">🥖</div>
+          <div class="hero-info"><b>VOCÊ · MESTRE DOS PÃES</b><span>Resistência da Padaria</span></div>
+          <div class="health"><span>♥</span><strong id="player-health">30</strong></div>
+          <div class="hero-mana" id="player-mana">1 / 1 MANA</div>
+          <div class="heart-meter"><div class="heart-meter-fill" id="player-health-fill"></div></div>
+          <small class="heart-meter-label" id="player-health-label">30 / 30</small>
+        </div>
+        <div class="player-help"><b id="action-title">Sua vez de agir</b><span id="action-help">Jogue cartas, ataque e encerre o turno.</span></div>
+      </section>
+      <section class="hand-area">
+        <div class="hand-head"><div><b>SUA MÃO</b><span id="hand-count">3 cartas</span></div><div class="mana-display"><span>✦</span><strong id="mana-text">1 / 1</strong><small>MANA</small><div id="mana-gems" class="gems"></div></div></div>
+        <div id="hand" class="hand"></div>
+      </section>
     </div>
-    <div class="enemy-deck-zone"><div class="enemy-card-stack" title="Baralho alienígena — cartas restantes ocultas"><div class="deck-symbol">✦</div><small>BARALHO ZORK</small></div><div id="enemy-deck-visual" class="enemy-hand-backs"></div><span id="enemy-hand-number">4 CARTAS NA MÃO</span></div>
-    <div class="enemy-intel"><div class="intel-label">PROTOCOLO ALIEN</div><div id="ai-thought">“Analisando formas de vida...”</div><div class="difficulty"><span></span><span></span><span></span><span></span><small>IA TÁTICA · NORMAL+</small></div></div>
-  </section>
-  <div class="battlefield">
-    <div class="lane-label"><span>ESQUADRÃO ALIENÍGENA</span><span id="enemy-board-count">0 / 7</span></div>
-    <div id="enemy-board" class="board"></div>
-    <div class="center-divider"><span>✦</span><small>CAMPO DE BATALHA</small><span>✦</span></div>
-    <div id="player-board" class="board"></div>
-    <div class="lane-label player-lane"><span>SEU ESQUADRÃO · PÃES</span><span id="player-board-count">0 / 7</span></div>
+    <aside class="arena-rail">
+      <div class="rail-deck enemy-rail"><div class="enemy-card-stack" title="Baralho alienígena"><div class="deck-symbol">✦</div><small>BARALHO ZORK</small></div><span id="enemy-deck-number">40 / 40</span></div>
+      <div class="rail-turn"><button id="end-turn" class="end-turn">ENCERRAR TURNO <span>➜</span></button><div id="ai-thought" class="rail-ai">“Analisando formas de vida...”</div></div>
+      <div class="rail-deck player-rail"><div class="player-card-stack"><div class="deck-symbol">🍞</div><small>BARALHO PÃES</small></div><span id="player-deck-number">40 / 40</span></div>
+    </aside>
   </div>
-  <section class="hero-row player">
-    <div class="hero-card player-hero" id="player-hero" data-target="playerHero">
-      <div class="hero-portrait bread-portrait">🥖</div><div class="hero-info"><b>VOCÊ · MESTRE DOS PÃES</b><span>Resistência da Padaria</span></div>
-      <div class="health"><span>♥</span><strong id="player-health">30</strong></div>
-      <div class="hero-mana" id="player-mana">1 / 1 MANA</div>
-    </div>
-    <div class="player-help"><b id="action-title">Sua vez de agir</b><span id="action-help">Jogue cartas, ataque e encerre o turno.</span><div class="turn-controls"><button id="end-turn" class="end-turn">ENCERRAR TURNO <span>➜</span></button></div></div>
-  </section>
-  <section class="hand-area"><div class="hand-head"><div><b>SUA MÃO</b><span id="hand-count">3 cartas</span></div><div class="mana-display"><span>✦</span><strong id="mana-text">1 / 1</strong><small>MANA</small><div id="mana-gems" class="gems"></div></div></div><div id="hand" class="hand"></div></section>
 </main>
-<footer><span>BUILD 0.4 · TACTICAL AI + PIXI</span><span>As estatísticas serão rebalanceadas com você.</span><span id="log-toggle" tabindex="0">REGISTRO DE COMBATE ▾</span></footer>
+<footer><span>BUILD 0.5 · ARENA 40</span><span>As estatísticas serão rebalanceadas com você.</span><span id="log-toggle" tabindex="0">REGISTRO DE COMBATE ▾</span></footer>
 <div id="log" class="combat-log"></div>
 <div id="modal" class="modal hidden"><div class="modal-card"><div class="modal-symbol" id="modal-symbol">🏆</div><h2 id="modal-title">Vitória!</h2><p id="modal-text"></p><button id="modal-restart" class="end-turn">JOGAR NOVAMENTE ↻</button></div></div>
 <div id="toast" class="toast"></div>

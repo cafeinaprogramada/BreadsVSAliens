@@ -122,7 +122,7 @@ const originalAttack=attackMinion;
 attackMinion=function(ai,ei){
  if(busy)return;
  const a=p('player').board[ai],d=p('enemy').board[ei];
- if(!a||!d)return;
+ if(!a||!d||!a.ready)return;
  if(p('enemy').board.some(u=>u.taunt)&&!d.taunt){toast('PROVOCAR: ataque a criatura com Provocar!');return;}
  const src=unit('player',ai),dst=unit('enemy',ei),art=allCards[a.id].art,damage=a.attack,ret=d.attack;
  busy=true;aiBusy=true;selectedAttacker=null;
@@ -132,7 +132,7 @@ attackMinion=function(ai,ei){
 const originalHero=attackHero;
 attackHero=function(i){
  if(busy)return;
- const a=p('player').board[i];if(!a||!a.ready)return;
+ const a=p('player').board[i];if(!a||!a.ready||a.rushOnly){if(a?.rushOnly)toast('INVESTIDA: neste turno, esta carta só pode atacar criaturas.');return;}
  if(p('enemy').board.some(u=>u.taunt)){toast('PROVOCAR: ataque primeiro a criatura com Provocar!');return;}
  const src=unit('player',i),dst=hero('enemy'),art=allCards[a.id].art,damage=a.attack;
  busy=true;aiBusy=true;selectedAttacker=null;

@@ -4,7 +4,7 @@
 const motion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sleep=ms=>new Promise(r=>setTimeout(r,motion?80:ms));
 const root=document.createElement('div');root.id='pixi-effects';document.body.appendChild(root);
-let app=null,active=false,busy=false,drag=null,seq=0;
+let app=null,active=false,busy=false,drag=null,seq=0,suppressClick=false;
 const fx={get busy(){return busy},banner,aiAction};
 window.TCGMotion=fx;
 const P=window.PIXI;
@@ -133,6 +133,7 @@ function dragBegin(e){
  if(!data)return;
  drag={el,idx,card:!!card,x:e.clientX,y:e.clientY,moved:false,preview:null,source:point(el)};
 }
+document.addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopImmediatePropagation();suppressClick=false;}},true);
 document.addEventListener('pointerdown',dragBegin);
 document.addEventListener('pointermove',e=>{
  if(!drag)return;
@@ -155,10 +156,14 @@ document.addEventListener('pointerup',e=>{
  d.preview?.remove();d.el.classList.remove('tcg-drag-source');
  document.querySelectorAll('.tcg-drop-target').forEach(x=>x.classList.remove('tcg-drop-target'));
  if(!d.moved)return;
+ suppressClick=true;setTimeout(()=>{suppressClick=false;},80);
  const target=document.elementFromPoint(e.clientX,e.clientY);
  if(d.card){
-  if(target?.closest('#player-board,.battlefield,#enemy-board')){playCard(d.idx);}
-  else if(target?.closest('#player-board .minion')&&targetMode){clickMinion('player',Array.from(document.querySelectorAll('#player-board .minion')).indexOf(target.closest('.minion')));}
+  const friendly=target?.closest('#player-board .minion'),enemyTarget=target?.closest('#enemy-board .minion');
+  const c=allCards[p('player').hand[d.idx]];
+  if(c?.kind==='spell'&&['buff','shield'].includes(c.ability)&&friendly){playCard(d.idx);clickMinion('player',Array.from(document.querySelectorAll('#player-board .minion')).indexOf(friendly));}
+  else if(c?.kind==='spell'&&c.ability==='damage'&&enemyTarget){playCard(d.idx);clickMinion('enemy',Array.from(document.querySelectorAll('#enemy-board .minion')).indexOf(enemyTarget));}
+  else if(target?.closest('#player-board,.battlefield,#enemy-board'))playCard(d.idx);
  }else{
   const enemy=target?.closest('#enemy-board .minion'),heroTarget=target?.closest('#enemy-hero');
   if(enemy){attackMinion(d.idx,Array.from(document.querySelectorAll('#enemy-board .minion')).indexOf(enemy));}
@@ -166,6 +171,9 @@ document.addEventListener('pointerup',e=>{
  }
 });
 document.addEventListener('pointercancel',()=>{drag?.preview?.remove();drag?.el?.classList.remove('tcg-drag-source');drag=null;});
+const info=document.createElement('div');info.id='tcg-rule-tip';info.textContent='PROVOCAR — Esta criatura protege seus aliados. Enquanto estiver em campo, ataques de criaturas inimigas devem escolhê-la antes de atacar outros alvos.';document.body.appendChild(info);
+document.addEventListener('pointerover',e=>{const t=e.target.closest('.minion .taunt');if(t){info.classList.add('visible');const r=t.getBoundingClientRect();info.style.left=Math.min(innerWidth-310,Math.max(8,r.left))+'px';info.style.top=Math.max(8,r.top-108)+'px';}});
+document.addEventListener('pointerout',e=>{if(e.target.closest('.minion .taunt'))info.classList.remove('visible');});
 const originalRender=render;
 render=function(){originalRender.apply(this,arguments);
  const taunts=p('enemy').board.some(u=>u.taunt);

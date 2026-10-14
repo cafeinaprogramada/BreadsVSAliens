@@ -61,7 +61,7 @@ function render(){
  $('enemy-deck-visual')?.replaceChildren(...Array.from({length:Math.min(5,p('enemy').hand.length)},()=>{const el=document.createElement('div');el.className='enemy-card-back';el.textContent='✦';el.title='Carta oculta na mão de Zork';return el;}));
  $('enemy-hand-number')?.replaceChildren(document.createTextNode(p('enemy').hand.length+' CARTAS NA MÃO'));
  $('player-board-count').textContent=`${p('player').board.length} / 7`;$('enemy-board-count').textContent=`${p('enemy').board.length} / 7`;
- $('turn-label').textContent=state.active==='player'?'SEU TURNO':'TURNO ALIENÍGENA';
+ if($('turn-label'))$('turn-label').textContent=state.active==='player'?'SEU TURNO':'TURNO ALIENÍGENA';
  $('round-label').textContent=`TURNO ${state.turn.toString().padStart(2,'0')}`;
  $('end-turn').disabled=state.active!=='player'||state.over||aiBusy;
  $('end-turn').style.opacity=state.active==='player'&&!state.over&&!aiBusy?'1':'.45';

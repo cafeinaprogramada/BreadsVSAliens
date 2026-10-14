@@ -1,0 +1,22 @@
+/* v0.7 viewport, hover and combat polish */
+body{overflow-x:hidden}
+.app{padding-top:4px}
+.statusline{padding:5px 0 9px}
+.duel-layout>.inspect-panel{position:sticky!important;top:12px!important;align-self:start;max-height:calc(100dvh - 26px);overflow-y:auto;overscroll-behavior:contain;z-index:12}
+.arena-main .hand-area{overflow:visible}
+.arena-main .hand{overflow-x:auto;overflow-y:visible;min-height:185px;padding-top:28px;padding-bottom:20px;align-items:flex-end;scrollbar-width:thin}
+.arena-main .hand .card{transform-origin:center bottom;flex-shrink:0;overflow:hidden}
+.arena-main .hand .card:hover{transform:translateY(-10px) scale(1.045)!important;box-shadow:0 0 17px #ffe59c88,0 9px 18px #000b;z-index:9}
+.arena-main .hand .card.selected{transform:translateY(-10px) scale(1.04)!important}
+.arena-main .hand .card::before{pointer-events:none}
+.arena-main .mana-display .gems,.arena-main .mana-display .gem{display:none!important}
+.arena-main .hero-mana{border-color:#4aa9d7!important;color:#b3e9ff!important;background:#14364c!important}
+.restart-floating{position:fixed;bottom:15px;right:16px;z-index:45;border:1px solid #b7a06e;border-radius:10px;padding:11px 15px;background:#1c2b36ee;color:#ffe1a0;font-size:11px;box-shadow:0 5px 18px #000a;backdrop-filter:blur(8px)}
+.restart-floating:hover{filter:brightness(1.18)}
+footer{padding-bottom:40px}
+.tcg-attack-ghost{position:fixed;z-index:96;pointer-events:none;border:2px solid #ffe19c;border-radius:9px;box-shadow:0 0 25px #ffd883,0 12px 30px #000b;background:#192732;overflow:hidden;will-change:transform,left,top}
+.tcg-attack-ghost img{width:100%;height:100%;object-fit:cover;border-radius:6px}
+.tcg-attack-ghost .minion-name,.tcg-attack-ghost .stat{pointer-events:none}
+.tcg-rainbow-arrival{animation:rainbow-arrival 1.85s ease-in-out!important;box-shadow:0 0 24px #ff6ddf,0 0 44px #63dcff!important}
+@keyframes rainbow-arrival{0%{transform:scale(.35) rotate(-12deg);opacity:0;filter:hue-rotate(0deg) brightness(3)}30%{transform:scale(1.2) rotate(6deg);opacity:1;filter:hue-rotate(100deg) brightness(2)}65%{transform:scale(.97) rotate(-3deg);filter:hue-rotate(230deg) brightness(1.6)}100%{transform:scale(1);filter:hue-rotate(360deg) brightness(1)}}
+@media(max-width:740px){.duel-layout>.inspect-panel{position:sticky!important;top:0!important;z-index:30;max-height:150px;overflow-y:auto;background:#172731f7}.card-inspect.inspect-visible{max-height:115px;overflow:auto}.arena-main .hand{min-height:152px;padding-top:20px}.restart-floating{bottom:9px;right:8px;font-size:9px;padding:8px 10px}}

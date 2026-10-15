@@ -1,5 +1,7 @@
 const $ = id => document.getElementById(id);
 let allCards={}, state={}, selectedCard=null, selectedAttacker=null, targetMode=null, aiBusy=false, toastTimer=null;
+const rivalName=()=>window.TCGMenu?.name(window.TCGMenu?.match?.enemy)||'Adversário';
+const rivalFaction=()=>window.TCGMenu?.match?.enemy||'alien';
 const rand = arr => arr[Math.floor(Math.random()*arr.length)];
 const shuffle = arr => {for(let i=arr.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;};
 const DECK_SIZE=40,MAX_COPIES=3;
@@ -47,7 +49,7 @@ function startGame(){
  window.TCGMenu?.applyBattle();setStatus('Sua vez. Jogue uma carta ou examine o campo.'); render();
 }
 function p(side=state.active){return state.players[side]}
-function draw(side){const pl=p(side);if(pl.deck.length){const id=pl.deck.pop();if(pl.hand.length<10)pl.hand.push(id);else log((side==='player'?'Sua mão':'A mão de Zork')+' está cheia: '+allCards[id].name+' foi descartada.');}else{pl.fatigue++;pl.health-=pl.fatigue;log((side==='player'?'Você':'CPU')+' sofre '+pl.fatigue+' de dano por fadiga.');if(pl.health<=0) checkEnd();}}
+function draw(side){const pl=p(side);if(pl.deck.length){const id=pl.deck.pop();if(pl.hand.length<10)pl.hand.push(id);else log((side==='player'?'Sua mão':'A mão do adversário')+' está cheia: '+allCards[id].name+' foi descartada.');}else{pl.fatigue++;pl.health-=pl.fatigue;log((side==='player'?'Você':rivalName())+' sofre '+pl.fatigue+' de dano por fadiga.');if(pl.health<=0) checkEnd();}}
 function log(msg){if(!state.logs)state.logs=[];state.logs.unshift(msg);state.logs=state.logs.slice(0,35);const el=$('log');el.innerHTML=state.logs.map(x=>`<div class="log-entry">${escapeHtml(x)}</div>`).join('');}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function setStatus(s){$('status').textContent=s;}
@@ -60,17 +62,17 @@ function render(){
  $('mana-text').textContent=`${p('player').mana} / ${p('player').maxMana}`;$('hand-count').textContent=`${p('player').hand.length} cartas`;
  $('deck-count').textContent=`DECKS ${p('player').deck.length} / ${p('enemy').deck.length}`;
  for(const side of ['player','enemy']){const count=$(side+'-deck-number');if(count)count.textContent=p(side).deck.length+' / '+DECK_SIZE;}
- $('enemy-deck-visual')?.replaceChildren(...Array.from({length:Math.min(5,p('enemy').hand.length)},()=>{const el=document.createElement('div');el.className='enemy-card-back';el.textContent='✦';el.title='Carta oculta na mão de Zork';return el;}));
+ $('enemy-deck-visual')?.replaceChildren(...Array.from({length:Math.min(5,p('enemy').hand.length)},()=>{const el=document.createElement('div');el.className='enemy-card-back';el.textContent='✦';el.title='Carta oculta na mão do adversário';return el;}));
  $('enemy-hand-number')?.replaceChildren(document.createTextNode(p('enemy').hand.length+' CARTAS NA MÃO'));
  $('player-board-count').textContent=`${p('player').board.length} / 7`;$('enemy-board-count').textContent=`${p('enemy').board.length} / 7`;
- if($('turn-label'))$('turn-label').textContent=state.active==='player'?'SEU TURNO':'TURNO ALIENÍGENA';
+ if($('turn-label'))$('turn-label').textContent=state.active==='player'?'SEU TURNO':'TURNO DE '+rivalName().toUpperCase();
  $('round-label').textContent=`TURNO ${state.turn.toString().padStart(2,'0')}`;
  $('end-turn').disabled=state.active!=='player'||state.over||aiBusy;
  $('end-turn').style.opacity=state.active==='player'&&!state.over&&!aiBusy?'1':'.45';
  const gems=$('mana-gems');gems.innerHTML='';for(let i=0;i<p('player').maxMana;i++){const g=document.createElement('i');g.className='gem'+(i<p('player').mana?' full':'');g.classList.add('gem');gems.appendChild(g);}
  renderHand();renderBoard('player');renderBoard('enemy');
  $('action-title').textContent=targetMode?'Escolha um alvo':selectedAttacker!==null?'Escolha o alvo do ataque':'Sua vez de agir';
- $('action-help').textContent=targetMode==='chargebuff'?'Escolha um Pão para receber Investida.':targetMode==='poisonbuff'?'Escolha um Pão para receber Toque Venenoso.':targetMode==='buff'?'Selecione uma criatura aliada.':targetMode==='shield'?'Selecione um aliado para receber Provocar.':targetMode==='damage'?'Selecione uma criatura inimiga para receber 3 de dano.':selectedAttacker!==null?'Clique ou arraste até uma criatura inimiga ou o herói alienígena.':'Jogue cartas, ataque e encerre o turno.';
+ $('action-help').textContent=targetMode==='chargebuff'?'Escolha um Pão para receber Investida.':targetMode==='poisonbuff'?'Escolha um Pão para receber Toque Venenoso.':targetMode==='buff'?'Selecione uma criatura aliada.':targetMode==='shield'?'Selecione um aliado para receber Provocar.':targetMode==='damage'?'Selecione uma criatura inimiga para receber 3 de dano.':selectedAttacker!==null?'Clique ou arraste até uma criatura inimiga ou o herói adversário.':'Jogue cartas, ataque e encerre o turno.';
  $('ai-thought').textContent=state.active==='enemy'?'“Calculando probabilidades de vitória...”':state.lastAction||'“Analisando formas de vida...”';
 }
 let inspectTimer=null,inspectSource=null;
@@ -133,11 +135,11 @@ function clickMinion(side,i){
  if(side==='player'){const u=p('player').board[i];if(u.ready){selectedAttacker=i;selectedCard=null;targetMode=null;setStatus('Escolha um alvo inimigo.');render();}else toast('Essa criatura ainda não pode atacar neste turno.');}
 }
 function makeUnit(c){return {id:c.id,attack:c.attack,health:c.health,maxHealth:c.health,ready:['rush','charge'].includes(c.ability),rushOnly:c.ability==='rush',taunt:c.ability==='guard',poison:c.ability==='poison'};}
-function giveCard(side,id){const own=p(side);if(!allCards[id])return;if(own.hand.length<10){own.hand.push(id);log((side==='player'?'Você':'CPU')+' recebeu '+allCards[id].name+' na mão.');}else log('Mão cheia: '+allCards[id].name+' foi descartada.');}
+function giveCard(side,id){const own=p(side);if(!allCards[id])return;if(own.hand.length<10){own.hand.push(id);log((side==='player'?'Você':rivalName())+' recebeu '+allCards[id].name+' na mão.');}else log('Mão cheia: '+allCards[id].name+' foi descartada.');}
 function applyPoison(attacker,defender,damage){if(attacker?.poison&&damage>0&&defender)defender.health=0;}
 function triggerBattlecry(side,u,c){
  const own=p(side),foe=p(side==='player'?'enemy':'player');
- switch(c.ability){case'heal':{const healed=Math.min(2,30-own.health);own.health+=healed;if(healed)log(c.name+' restaurou '+healed+' de vida ao '+(side==='enemy'?'herói da CPU':'seu herói')+'.');break;}case'healall':own.health=Math.min(30,own.health+3);own.board.forEach(x=>{x.health=Math.min(x.maxHealth,x.health+3)});break;case'healminion':{const hurt=own.board.filter(x=>x!==u&&x.health<x.maxHealth);if(hurt.length){const t=hurt.sort((a,b)=>(a.health/a.maxHealth)-(b.health/b.maxHealth))[0];t.health=Math.min(t.maxHealth,t.health+2);}else{own.health=Math.min(30,own.health+2);log(c.name+' restaurou 2 de vida do herói.');}break;}case'draw':draw(side);break;case'chainMenta':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Sonho de Menta')?.id);break;case'chainVermelhinha':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Vermelhinha')?.id);break;case'twin':if(own.board.length<7){const clone=makeUnit(c);clone.ready=false;own.board.push(clone);log(c.name+' invocou uma cópia!');}break;case'teamBuff':own.board.forEach(x=>{x.attack++;x.health++;x.maxHealth++;});log(c.name+' fortaleceu todos os Pães em campo com +1/+1!');break;case'ping':if(c.id==='bread12'){foe.health-=1;}else if(foe.board.length){const t=foe.board.slice().sort((a,b)=>a.health-b.health)[0];damageMinion(side==='player'?'enemy':'player',foe.board.indexOf(t),1);cleanup(side==='player'?'enemy':'player');}else foe.health-=1;break;}
+ switch(c.ability){case'heal':{const healed=Math.min(2,30-own.health);own.health+=healed;if(healed)log(c.name+' restaurou '+healed+' de vida ao '+(side==='enemy'?rivalName():'seu herói')+'.');break;}case'healall':own.health=Math.min(30,own.health+3);own.board.forEach(x=>{x.health=Math.min(x.maxHealth,x.health+3)});break;case'healminion':{const hurt=own.board.filter(x=>x!==u&&x.health<x.maxHealth);if(hurt.length){const t=hurt.sort((a,b)=>(a.health/a.maxHealth)-(b.health/b.maxHealth))[0];t.health=Math.min(t.maxHealth,t.health+2);}else{own.health=Math.min(30,own.health+2);log(c.name+' restaurou 2 de vida do herói de '+rivalName()+'.');}break;}case'draw':draw(side);break;case'chainMenta':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Sonho de Menta')?.id);break;case'chainVermelhinha':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Vermelhinha')?.id);break;case'twin':if(own.board.length<7){const clone=makeUnit(c);clone.ready=false;own.board.push(clone);log(c.name+' invocou uma cópia!');}break;case'teamBuff':own.board.forEach(x=>{x.attack++;x.health++;x.maxHealth++;});log(c.name+' fortaleceu todos os Pães em campo com +1/+1!');break;case'ping':if(c.id==='bread12'){foe.health-=1;}else if(foe.board.length){const t=foe.board.slice().sort((a,b)=>a.health-b.health)[0];damageMinion(side==='player'?'enemy':'player',foe.board.indexOf(t),1);cleanup(side==='player'?'enemy':'player');}else foe.health-=1;break;}
 }
 function resolveSpell(side,c,target){
  const own=p(side),foe=p(side==='player'?'enemy':'player');
@@ -154,10 +156,10 @@ function resolveSpell(side,c,target){
 function damageMinion(side,i,n){const u=p(side).board[i];if(!u)return;u.health-=n;if(u.health<=0){log(`${allCards[u.id].name} foi derrotado.`);p(side).graveyard.push(u.id);p(side).board.splice(i,1);}else log(`${allCards[u.id].name} recebeu ${n} de dano.`);}
 function cleanup(side){const own=p(side);own.board.filter(u=>u.health<=0).forEach(u=>{own.graveyard.push(u.id);log(allCards[u.id].name+' foi derrotado.');});own.board=own.board.filter(u=>u.health>0);}
 function attackMinion(ai,ei){if(p('enemy').board.some(u=>u.taunt)&&!p('enemy').board[ei]?.taunt){toast('PROVOCAR: ataque a criatura que protege o campo!');return;}const atk=p('player').board[ai],def=p('enemy').board[ei];if(!atk||!def||!atk.ready)return;const attack=atk.attack;def.health-=attack;atk.health-=def.attack;applyPoison(atk,def,attack);applyPoison(def,atk,def.attack);atk.ready=false;log(`${allCards[atk.id].name} (${attack}) atacou ${allCards[def.id].name} (${def.attack}).`);if(def.health<=0)log(`${allCards[def.id].name} foi derrotado.`);if(atk.health<=0)log(`${allCards[atk.id].name} foi derrotado.`);cleanup('player');cleanup('enemy');}
-function attackHero(i){const u=p('player').board[i];if(!u||!u.ready||u.rushOnly)return;if(p('enemy').board.some(x=>x.taunt)){toast('Você precisa atacar uma criatura com Provocar.');return;}p('enemy').health-=u.attack;u.ready=false;log(`${allCards[u.id].name} atacou o herói alienígena e causou ${u.attack} de dano.`);selectedAttacker=null;render();checkEnd();}
+function attackHero(i){const u=p('player').board[i];if(!u||!u.ready||u.rushOnly)return;if(p('enemy').board.some(x=>x.taunt)){toast('Você precisa atacar uma criatura com Provocar.');return;}p('enemy').health-=u.attack;u.ready=false;log(`${allCards[u.id].name} atacou o herói adversário e causou ${u.attack} de dano.`);selectedAttacker=null;render();checkEnd();}
 function clickHero(side){if(side==='enemy'&&selectedAttacker!==null){if(p('enemy').board.some(u=>u.taunt)){toast('PROVOCAR: elimine as criaturas com Provocar antes do ataque direto.');return;}attackHero(selectedAttacker);return;}if(targetMode)toast('Essa carta precisa de um alvo no campo.');}
 $('player-hero').onclick=()=>clickHero('player');$('enemy-hero').onclick=()=>clickHero('enemy');
-function endTurn(){if(state.over||state.active!=='player'||aiBusy||window.TCGMotion?.busy)return;selectedCard=null;selectedAttacker=null;targetMode=null;state.active='enemy';setStatus('A CPU está calculando suas jogadas...');render();setTimeout(aiTurn,500);}
+function endTurn(){if(state.over||state.active!=='player'||aiBusy||window.TCGMotion?.busy)return;selectedCard=null;selectedAttacker=null;targetMode=null;state.active='enemy';setStatus(rivalName()+' está calculando suas jogadas...');render();setTimeout(aiTurn,500);}
 $('end-turn').onclick=endTurn;
 function beginTurn(side){const pl=p(side);pl.maxMana=Math.min(10,pl.maxMana+1);pl.mana=pl.maxMana;draw(side);pl.board.forEach(u=>{u.ready=true;u.rushOnly=false;});}
 function aiTurn(){
@@ -165,9 +167,9 @@ function aiTurn(){
  async function step(){
   if(state.over){aiBusy=false;return;}
   const choice=chooseAIAction();if(choice&&safety++<18){if(window.TCGMotion)await window.TCGMotion.aiAction(choice);else{executeAI(choice);render();}await new Promise(r=>setTimeout(r,700));return step();}
-  aiBusy=false;state.active='player';state.turn++;beginTurn('player');setStatus('Seu turno! A mana foi recarregada e você comprou uma carta.');state.lastAction='“Os pães ainda estão de pé. Incrível...”';log('A CPU encerrou o turno. Sua vez!');render();checkEnd();window.TCGMotion?.banner('SEU TURNO','PREPARE O ESQUADRÃO');
+  aiBusy=false;state.active='player';state.turn++;beginTurn('player');setStatus('Seu turno! A mana foi recarregada e você comprou uma carta.');state.lastAction='“Os pães ainda estão de pé. Incrível...”';log(rivalName()+' encerrou o turno. Sua vez!');render();checkEnd();window.TCGMotion?.banner('SEU TURNO','PREPARE O ESQUADRÃO');
  }
- window.TCGMotion?.banner('TURNO ALIENÍGENA','ZORK VAI AGIR');setTimeout(()=>step().catch(console.error),3200);
+ window.TCGMotion?.banner('TURNO DO ADVERSÁRIO',rivalName().toUpperCase()+' VAI AGIR');setTimeout(()=>step().catch(console.error),3200);
 }
 /* AI v2 — finite-state tactical planner; evaluates every action after each move. */
 const AI_STYLES=[
@@ -290,10 +292,10 @@ function chooseAIAction(){
  brain.phase='pass';return null;
 }
 function executeAI(a){const me=p('enemy'),foe=p('player');
- if(a.type==='unit'){const id=me.hand.splice(a.i,1)[0],c=allCards[id];me.mana-=c.cost;const u=makeUnit(c);me.board.push(u);triggerBattlecry('enemy',u,c);log(`A CPU invocou ${c.name} (${u.attack}/${u.health}).`);state.lastAction='“'+aiBrain.style.name+': consolidando a estratégia.”';}
- if(a.type==='spell'){const id=me.hand[a.i],c=allCards[id];me.hand.splice(a.i,1);me.mana-=c.cost;if(c.ability==='damage'&&a.target!==undefined){damageMinion('player',a.target,3);}else if(c.ability==='buff'||c.ability==='shield'||c.ability==='poisonbuff'||c.ability==='chargebuff'){const u=me.board[a.target]||me.board[0];if(u){if(c.ability==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;}else if(c.ability==='poisonbuff'){u.poison=true;}else if(c.ability==='chargebuff'){u.ready=true;u.rushOnly=true;}else{u.taunt=true;u.health+=3;u.maxHealth+=3;}}}else resolveSpell('enemy',c,null);log(`A CPU usou ${c.name}.`);state.lastAction='“Recursos utilizados com eficiência.”';}
- if(a.type==='attack'){const at=me.board[a.i],de=foe.board[a.target];if(at&&at.ready&&de&&(!foe.board.some(u=>u.taunt)||de.taunt)){de.health-=at.attack;at.health-=de.attack;applyPoison(at,de,at.attack);applyPoison(de,at,de.attack);at.ready=false;log(`${allCards[at.id].name} da CPU atacou ${allCards[de.id].name}.`);cleanup('player');cleanup('enemy');}}
- if(a.type==='face'){const at=me.board[a.i];if(at&&at.ready&&!at.rushOnly&&!foe.board.some(u=>u.taunt)){foe.health-=at.attack;at.ready=false;log(`A CPU atacou seu herói com ${allCards[at.id].name}, causando ${at.attack} de dano.`);}}
+ if(a.type==='unit'){const id=me.hand.splice(a.i,1)[0],c=allCards[id];me.mana-=c.cost;const u=makeUnit(c);me.board.push(u);triggerBattlecry('enemy',u,c);log(`${rivalName()} invocou ${c.name} (${u.attack}/${u.health}).`);state.lastAction='“'+aiBrain.style.name+': consolidando a estratégia.”';}
+ if(a.type==='spell'){const id=me.hand[a.i],c=allCards[id];me.hand.splice(a.i,1);me.mana-=c.cost;if(c.ability==='damage'&&a.target!==undefined){damageMinion('player',a.target,3);}else if(c.ability==='buff'||c.ability==='shield'||c.ability==='poisonbuff'||c.ability==='chargebuff'){const u=me.board[a.target]||me.board[0];if(u){if(c.ability==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;}else if(c.ability==='poisonbuff'){u.poison=true;}else if(c.ability==='chargebuff'){u.ready=true;u.rushOnly=true;}else{u.taunt=true;u.health+=3;u.maxHealth+=3;}}}else resolveSpell('enemy',c,null);log(`${rivalName()} usou ${c.name}.`);state.lastAction='“Recursos utilizados com eficiência.”';}
+ if(a.type==='attack'){const at=me.board[a.i],de=foe.board[a.target];if(at&&at.ready&&de&&(!foe.board.some(u=>u.taunt)||de.taunt)){de.health-=at.attack;at.health-=de.attack;applyPoison(at,de,at.attack);applyPoison(de,at,de.attack);at.ready=false;log(`${allCards[at.id].name} de ${rivalName()} atacou ${allCards[de.id].name}.`);cleanup('player');cleanup('enemy');}}
+ if(a.type==='face'){const at=me.board[a.i];if(at&&at.ready&&!at.rushOnly&&!foe.board.some(u=>u.taunt)){foe.health-=at.attack;at.ready=false;log(`${rivalName()} atacou seu herói com ${allCards[at.id].name}, causando ${at.attack} de dano.`);}}
  checkEnd();
 }
 function checkEnd(){if(state.over)return;if(p('player').health<=0||p('enemy').health<=0){state.over=true;const win=p('enemy').health<=0; $('modal-symbol').textContent=win?'🏆':'👽';$('modal-title').textContent=win?'VITÓRIA!':'DERROTA!';$('modal-text').textContent=win?'Você venceu o duelo contra '+(window.TCGMenu?.name(window.TCGMenu?.match.enemy)||'a CPU')+'!':'A CPU venceu o duelo. Experimente outra estratégia ou um novo confronto.';$('modal').classList.remove('hidden');render();}}

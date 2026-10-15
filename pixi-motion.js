@@ -73,7 +73,7 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
  if(line)app.stage.addChild(line);
  if(srcEl)srcEl.classList.add('tcg-in-flight');
  const attackerGhost=srcEl?.cloneNode(true);if(attackerGhost){attackerGhost.removeAttribute('id');attackerGhost.className='tcg-attack-ghost';attackerGhost.style.width=Math.min(a.w,110)+'px';attackerGhost.style.height=Math.min(a.h,140)+'px';attackerGhost.style.maxWidth='110px';attackerGhost.style.maxHeight='140px';attackerGhost.style.position='fixed';attackerGhost.style.left=a.x+'px';attackerGhost.style.top=a.y+'px';attackerGhost.style.transform='translate(-50%,-50%)';overlay.appendChild(attackerGhost);srcEl.style.opacity='0.15';}
- await tween(1650,t=>{
+ await tween(1150,t=>{
   const arc=Math.sin(Math.PI*t)*-65;
   if(sp){sp.x=a.x+(b.x-a.x)*t;sp.y=a.y+(b.y-a.y)*t+arc;sp.rotation=Math.sin(Math.PI*t)*.12;sp.scale.set(1+Math.sin(Math.PI*t)*.28);}
   if(attackerGhost){attackerGhost.style.left=(a.x+(b.x-a.x)*t)+'px';attackerGhost.style.top=(a.y+(b.y-a.y)*t+arc)+'px';attackerGhost.style.transform='translate(-50%,-50%) scale('+(1+Math.sin(Math.PI*t)*.2)+')';}
@@ -82,8 +82,8 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
  });
  burst(b,0xff6748,75);setTimeout(()=>burst(b,0xffd68c,30),200);num(dstEl,damage);if(returnDamage){burst(a,0x64ccff,16);num(srcEl,returnDamage);}
  if(dstEl){dstEl.classList.remove('tcg-impact');void dstEl.offsetWidth;dstEl.classList.add('tcg-impact');setTimeout(()=>dstEl.classList.remove('tcg-impact'),900);}
- await sleep(1200);
- await tween(800,t=>{if(sp){sp.x=b.x+(a.x-b.x)*t;sp.y=b.y+(a.y-b.y)*t;sp.alpha=1-t*.4;}
+ await sleep(700);
+ await tween(350,t=>{if(sp){sp.x=b.x+(a.x-b.x)*t;sp.y=b.y+(a.y-b.y)*t;sp.alpha=1-t*.4;}
   if(attackerGhost){attackerGhost.style.left=(b.x+(a.x-b.x)*t)+'px';attackerGhost.style.top=(b.y+(a.y-b.y)*t)+'px';attackerGhost.style.opacity=String(1-t*.35);}
   if(fallback){fallback.style.left=(b.x+(a.x-b.x)*t)+'px';fallback.style.top=(b.y+(a.y-b.y)*t)+'px';fallback.style.opacity=String(1-t*.35);}});
  if(srcEl){srcEl.classList.remove('tcg-in-flight');srcEl.style.opacity='';}attackerGhost?.remove();
@@ -91,6 +91,16 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
 }
 function summon(target,srcUrl,origin,special=false){
  const pos=point(target);if(!pos)return;
+ if(target?.dataset?.cardName==='O Santo Grão'){
+  target.classList.remove('tcg-soft-arrival','tcg-guard-drop','tcg-rainbow-arrival');
+  target.classList.add('tcg-holy-arrival');
+  const colors=[0xfff4c0,0xffffff,0xffd36c,0xfff9e0,0xffe49b];
+  colors.forEach((color,i)=>setTimeout(()=>burst(pos,color,26),i*180));
+  const halo=document.createElement('div');halo.className='tcg-holy-halo';
+  halo.style.left=pos.x+'px';halo.style.top=pos.y+'px';overlay.appendChild(halo);
+  setTimeout(()=>{halo.remove();target?.classList.remove('tcg-holy-arrival');},2500);
+  return;
+ }
  if(special){const colors=[0xff4242,0xffaa33,0xffeb48,0x61f5a0,0x5ddaff,0x9b68ff,0xff79d5];colors.forEach((color,i)=>setTimeout(()=>burst(pos,color,22),i*105));target?.classList.add('tcg-rainbow-arrival');setTimeout(()=>target?.classList.remove('tcg-rainbow-arrival'),1900);}else{target?.classList.add('tcg-soft-arrival');setTimeout(()=>target?.classList.remove('tcg-soft-arrival'),1150);if(target?.classList.contains('tcg-taunt')||target?.querySelector('.taunt')?.textContent.includes('PROVOCAR')){target.classList.add('tcg-guard-drop');setTimeout(()=>target.classList.remove('tcg-guard-drop'),1250);}}
  // Do not stack tcg-arrival over tcg-soft-arrival or rainbow; conflicting transforms cancel entry motion.
  // The card itself performs its field entrance; no floating full-resolution artwork.
@@ -108,24 +118,24 @@ async function aiAction(choice){
    preview.replaceChildren();preview.classList.add('inspect-visible','enemy-spell-preview');
    const image=document.createElement('img');image.src=spell.art;image.alt=spell.name;
    const name=document.createElement('strong');name.textContent=spell.name;
-   const cost=document.createElement('small');cost.textContent=spell.cost+' MANA · FEITIÇO DE ZORK';
-   const description=document.createElement('p');description.textContent=spell.description||'Feitiço alienígena';
+   const cost=document.createElement('small');cost.textContent=spell.cost+' MANA · FEITIÇO DE '+rivalName().toUpperCase();
+   const description=document.createElement('p');description.textContent=spell.description||'Feitiço do adversário';
    preview.append(image,name,cost,description);
   }
   await sleep(4000);
   executeAI(choice);render();
   if(preview){preview.classList.remove('inspect-visible','enemy-spell-preview');preview.replaceChildren();const placeholder=document.createElement('div');placeholder.className='inspect-placeholder';placeholder.textContent='Passe o cursor sobre uma carta para inspecioná-la.';preview.appendChild(placeholder);}
   enemyPreviewLock=false;
-  banner('FEITIÇO DE ZORK',spell?spell.name+' — '+(spell.description||'Efeito aplicado'):'Magia alienígena');
+  banner('FEITIÇO DE '+rivalName().toUpperCase(),spell?spell.name+' — '+(spell.description||'Efeito aplicado') :'Magia do adversário');
   await sleep(1700);return;
  }
  if(choice.type==='attack'||choice.type==='face'){
-  banner('ATAQUE DE ZORK',allCards[a.id]?.name+' → '+(d?allCards[d.id]?.name:'SEU HERÓI'));
+  banner('ATAQUE DE '+rivalName().toUpperCase(),allCards[a.id]?.name+' → '+(d?allCards[d.id]?.name:'SEU HERÓI'));
   await sleep(480);await travel(src,dest,art,attack,retaliation);
   executeAI(choice);render();await sleep(200);return;
  }
  executeAI(choice);render();
- if(choice.type==='unit'){banner('INVOCAÇÃO ALIENÍGENA',card?.name||'');}
+ if(choice.type==='unit'){banner(card?.name==='O Santo Grão'?'✦ INVOCAÇÃO CELESTIAL ✦':'INVOCAÇÃO DE '+rivalName().toUpperCase(),card?.name||'');}
  
  await sleep(1500);
 }
@@ -143,7 +153,7 @@ playCard=function(i){
  if(c?.kind==='unit'&&p('player').board.length>before){
   const special=['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(c.name);
   // Summons animate the actual minion card; never enlarge a PIXI artwork sprite.
-  banner(special?'✦ INVOCAÇÃO ARCO-ÍRIS ✦':'CRIATURA INVOCADA',c.name);
+  banner(c.name==='O Santo Grão'?'✦ INVOCAÇÃO CELESTIAL ✦':special?'✦ INVOCAÇÃO ARCO-ÍRIS ✦':'CRIATURA INVOCADA',c.name);
  }
 };
 const originalAttack=attackMinion;
@@ -226,7 +236,7 @@ render=function(){if(!state.players)return;originalRender.apply(this,arguments);
  const previous=previousVisualSnapshot[side]||[];
  document.querySelectorAll('#'+side+'-board .minion').forEach((el,i)=>{
   const fresh=visualSnapshotReady&&(i>=previous.length||previous[i]?.id!==p(side).board[i]?.id);
-  if(fresh){const card=allCards[p(side).board[i].id];summon(el,card?.art,null,['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(card?.name));}
+  if(fresh){const card=allCards[p(side).board[i].id];el.dataset.cardName=card?.name||'';summon(el,card?.art,null,['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(card?.name));}
   const u=p(side).board[i],old=previous[i];el.classList.toggle('tcg-poison-aura',!!u?.poison);
   if(old&&old.id===u?.id){
    if(u.health<old.health){el.classList.add('tcg-red-hit');setTimeout(()=>el.classList.remove('tcg-red-hit'),1400);}

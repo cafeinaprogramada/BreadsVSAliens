@@ -300,5 +300,6 @@ function executeAI(a){const me=p('enemy'),foe=p('player');
 }
 function checkEnd(){if(state.over)return;if(p('player').health<=0||p('enemy').health<=0){state.over=true;const win=p('enemy').health<=0; $('modal-symbol').textContent=win?'🏆':'👽';$('modal-title').textContent=win?'VITÓRIA!':'DERROTA!';$('modal-text').textContent=win?'Você venceu o duelo contra '+(window.TCGMenu?.name(window.TCGMenu?.match.enemy)||'a CPU')+'!':'A CPU venceu o duelo. Experimente outra estratégia ou um novo confronto.';$('modal').classList.remove('hidden');render();}}
 $('restart').onclick=startGame;$('modal-restart').onclick=()=>{$('modal').classList.add('hidden');startGame();};
+$('modal-home').onclick=()=>{$('modal').classList.add('hidden');window.TCGMenu?.open();};
 $('log-toggle').onclick=()=>$('log').classList.toggle('open');
 try { boot(); } catch(e) { console.error(e); document.body.innerHTML='<div style="padding:30px;color:white">Não foi possível iniciar o jogo. Verifique cards-data.js e o console do navegador.</div>'; }

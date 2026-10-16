@@ -66,7 +66,7 @@ function sprite(src,pos){
 }
 function remove(s){if(s&&app){app.stage.removeChild(s);s.destroy();}}
 async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
- const a=point(srcEl),b=point(dstEl);if(!a||!b){console.warn('Ataque sem alvo visual válido; dano resolvido sem animação.');return;}
+ const a=point(srcEl),b=point(dstEl);if(!a||!b){console.warn('Ataque sem alvo visual válido; dano resolvido sem animação.');window.TCGAudio?.play('attack');if(returnDamage>0)setTimeout(()=>window.TCGAudio?.play('attack'),180);return;}
  const sp=null; // Do not project card artwork through PIXI: original texture scale can fill the viewport.
  const fallback=null; // The field-sized DOM ghost below is the only moving card.
  if(fallback){fallback.className='tcg-moving-card';fallback.src=srcUrl||cardImg(srcEl)||'';fallback.style.width=a.w+'px';fallback.style.height=a.h+'px';overlay.appendChild(fallback);}
@@ -82,6 +82,7 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
   if(line){line.clear();line.lineStyle(4,0xffd780,.6);line.moveTo(a.x,a.y);line.lineTo(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t+arc);}
  });
  window.TCGAudio?.play('attack');
+ if(returnDamage>0)setTimeout(()=>window.TCGAudio?.play('attack'),180);
  burst(b,0xff6748,75);setTimeout(()=>burst(b,0xffd68c,30),200);num(dstEl,damage);if(returnDamage){burst(a,0x64ccff,16);num(srcEl,returnDamage);}
  if(dstEl){dstEl.classList.remove('tcg-impact');void dstEl.offsetWidth;dstEl.classList.add('tcg-impact');setTimeout(()=>dstEl.classList.remove('tcg-impact'),900);}
  await sleep(700);

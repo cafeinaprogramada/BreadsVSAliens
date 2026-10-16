@@ -8,7 +8,7 @@ const DECK_SIZE=40,MAX_COPIES=3;
 const UNIQUE_BREAD_NAMES=new Set(['Sonho de Blueberry','Sonho de Menta','Vermelhinha']);
 const copyLimit=c=>UNIQUE_BREAD_NAMES.has(c.name)?1:MAX_COPIES;
 function buildDeck(faction){
- const pool=window.CARD_DATA.cards.filter(c=>c.faction===faction);
+ const pool=window.CARD_DATA.cards.filter(c=>c.faction===faction&&!c.token);
  const chosen=[],counts={};
  const add=c=>{if(!c||chosen.length>=DECK_SIZE||(counts[c.id]||0)>=copyLimit(c))return false;chosen.push(c.id);counts[c.id]=(counts[c.id]||0)+1;return true;};
  const bands=[
@@ -115,7 +115,7 @@ function playCard(i){
  if(state.over||state.active!=='player'||aiBusy||window.TCGMotion?.busy)return;const id=p('player').hand[i],c=allCards[id];if(!c)return;if(c.cost>p('player').mana){toast('Mana insuficiente!');return;}
  if(c.cost>p('player').mana){toast('Mana insuficiente!');return;}
  if(c.kind==='unit'&&p('player').board.length>=7){toast('Seu campo já tem 7 criaturas.');return;}
- if(c.ability==='revive'&&!p('player').graveyard.length){toast('Nenhum Pão derrotado para recuperar.');return;}
+ if(c.ability==='revive'&&!p('player').graveyard.length){toast('Nenhuma criatura derrotada para recuperar.');return;}
  if(c.kind==='spell'&&['buff','shield','damage','poisonbuff','chargebuff'].includes(c.ability)){
   const ownTarget=['buff','shield','poisonbuff','chargebuff'].includes(c.ability);
   if(!(ownTarget?p('player').board.length:p('enemy').board.length)){toast(ownTarget?'Você precisa ter um Pão no campo para usar este feitiço.':'Você precisa de um alvo inimigo para usar este feitiço.');return;}
@@ -128,24 +128,33 @@ function playCard(i){
 function clickMinion(side,i){
  if(state.over||state.active!=='player'||aiBusy||window.TCGMotion?.busy)return;
  if(targetMode){const c=allCards[p('player').hand[selectedCard]];if(!c)return;
-   if(['buff','shield','poisonbuff','chargebuff'].includes(targetMode)&&side==='player'){p('player').mana-=c.cost;p('player').hand.splice(selectedCard,1);const u=p('player').board[i];if(targetMode==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;log(`${c.name} fortaleceu ${allCards[u.id].name} em +2/+2.`);}else if(targetMode==='poisonbuff'){u.poison=true;log(c.name+' concedeu Toque Venenoso a '+allCards[u.id].name+'.');}else if(targetMode==='chargebuff'){u.ready=true;u.rushOnly=true;log(c.name+' concedeu Investida a '+allCards[u.id].name+'.');}else{u.taunt=true;u.health+=3;u.maxHealth+=3;log(`${c.name} protegeu ${allCards[u.id].name} com +3 de vida e Provocar.`);}targetMode=null;selectedCard=null;render();return;}
+   if(['buff','shield','poisonbuff','chargebuff'].includes(targetMode)&&side==='player'){p('player').mana-=c.cost;p('player').hand.splice(selectedCard,1);const u=p('player').board[i];if(targetMode==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;log(`${c.name} fortaleceu ${allCards[u.id].name} em +2/+2.`);}else if(targetMode==='poisonbuff'){u.poison=true;log(c.name+' concedeu Toque Venenoso a '+allCards[u.id].name+'.');}else if(targetMode==='chargebuff'){u.ready=true;u.rushOnly=true;u.attacksLeft=Math.max(1,u.attacksLeft||0);log(c.name+' concedeu Investida a '+allCards[u.id].name+'.');}else{u.taunt=true;u.health+=3;u.maxHealth+=3;log(`${c.name} protegeu ${allCards[u.id].name} com +3 de vida e Provocar.`);}targetMode=null;selectedCard=null;render();return;}
    if(targetMode==='damage'&&side==='enemy'){p('player').mana-=c.cost;p('player').hand.splice(selectedCard,1);damageMinion('enemy',i,3);log(`${c.name} causou 3 de dano a ${allCards[p('enemy').board[i]?.id||'alien1']?.name||'uma criatura'}.`);targetMode=null;selectedCard=null;cleanup('enemy');render();checkEnd();return;}
  }
  if(selectedAttacker!==null){if(side==='enemy'){if(p('enemy').board.some(u=>u.taunt)&&!p('enemy').board[i].taunt){toast('PROVOCAR: ataque primeiro a criatura com Provocar!');return;}const attacker=selectedAttacker;selectedAttacker=null;attackMinion(attacker,i);render();return;} }
  if(side==='player'){const u=p('player').board[i];if(u.ready){selectedAttacker=i;selectedCard=null;targetMode=null;setStatus('Escolha um alvo inimigo.');render();}else toast('Essa criatura ainda não pode atacar neste turno.');}
 }
-function makeUnit(c){return {id:c.id,attack:c.attack,health:c.health,maxHealth:c.health,ready:['rush','charge'].includes(c.ability),rushOnly:c.ability==='rush',taunt:c.ability==='guard',poison:c.ability==='poison'};}
+function makeUnit(c){return {id:c.id,attack:c.attack,health:c.health,maxHealth:c.health,ready:['rush','charge'].includes(c.ability),rushOnly:c.ability==='rush',taunt:c.ability==='guard',poison:c.ability==='poison',attacksLeft:['rush','charge'].includes(c.ability)?1:0,maxAttacks:c.ability==='doubleAttack'?2:1};}
+function spendAttack(u){u.attacksLeft=Math.max(0,(u.attacksLeft??(u.ready?1:0))-1);u.ready=u.attacksLeft>0;}
+function humanBall(side){const own=p(side);if(own.board.length>=7)return;const ids=['human23','human24','human25'].filter(id=>allCards[id]);if(!ids.length)return;const c=allCards[rand(ids)],token=makeUnit(c);own.board.push(token);log('Betania invocou '+c.name+'!');}
+function onCombatKill(side,attacker,defender){if(!attacker||!defender||defender.health>0)return;if(allCards[attacker.id]?.ability==='humanTokens')humanBall(side);}
 function giveCard(side,id){const own=p(side);if(!allCards[id])return;if(own.hand.length<10){own.hand.push(id);log((side==='player'?'Você':rivalName())+' recebeu '+allCards[id].name+' na mão.');}else log('Mão cheia: '+allCards[id].name+' foi descartada.');}
 function applyPoison(attacker,defender,damage){if(attacker?.poison&&damage>0&&defender)defender.health=0;}
 function triggerBattlecry(side,u,c){
  const own=p(side),foe=p(side==='player'?'enemy':'player');
- switch(c.ability){case'heal':{const healed=Math.min(2,30-own.health);own.health+=healed;if(healed)log(c.name+' restaurou '+healed+' de vida ao '+(side==='enemy'?rivalName():'seu herói')+'.');break;}case'healall':own.health=Math.min(30,own.health+3);own.board.forEach(x=>{x.health=Math.min(x.maxHealth,x.health+3)});break;case'healminion':{const hurt=own.board.filter(x=>x!==u&&x.health<x.maxHealth);if(hurt.length){const t=hurt.sort((a,b)=>(a.health/a.maxHealth)-(b.health/b.maxHealth))[0];t.health=Math.min(t.maxHealth,t.health+2);}else{own.health=Math.min(30,own.health+2);log(c.name+' restaurou 2 de vida do herói de '+rivalName()+'.');}break;}case'draw':draw(side);break;case'chainMenta':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Sonho de Menta')?.id);break;case'chainVermelhinha':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Vermelhinha')?.id);break;case'twin':if(own.board.length<7){const clone=makeUnit(c);clone.ready=false;own.board.push(clone);log(c.name+' invocou uma cópia!');}break;case'teamBuff':own.board.forEach(x=>{x.attack++;x.health++;x.maxHealth++;});log(c.name+' fortaleceu todos os Pães em campo com +1/+1!');break;case'ping':if(c.id==='bread12'){foe.health-=1;}else if(foe.board.length){const t=foe.board.slice().sort((a,b)=>a.health-b.health)[0];damageMinion(side==='player'?'enemy':'player',foe.board.indexOf(t),1);cleanup(side==='player'?'enemy':'player');}else foe.health-=1;break;}
+ switch(c.ability){case'heal':{const healed=Math.min(2,30-own.health);own.health+=healed;if(healed)log(c.name+' restaurou '+healed+' de vida ao '+(side==='enemy'?rivalName():'seu herói')+'.');break;}case'healall':own.health=Math.min(30,own.health+3);own.board.forEach(x=>{x.health=Math.min(x.maxHealth,x.health+3)});break;case'healminion':{const hurt=own.board.filter(x=>x!==u&&x.health<x.maxHealth);if(hurt.length){const t=hurt.sort((a,b)=>(a.health/a.maxHealth)-(b.health/b.maxHealth))[0];t.health=Math.min(t.maxHealth,t.health+2);}else{own.health=Math.min(30,own.health+2);log(c.name+' restaurou 2 de vida do herói de '+rivalName()+'.');}break;}case'draw':draw(side);break;
+ case'humanHeal3':{const healed=Math.min(3,30-own.health);own.health+=healed;if(healed)log(c.name+' restaurou '+healed+' de vida do herói.');break;}
+ case'humanDestroy':{if(foe.board.length){const target=foe.board.reduce((best,u,i)=>u.attack>foe.board[best].attack?i:best,0);const victim=foe.board[target];foe.graveyard.push(victim.id);foe.board.splice(target,1);log(c.name+' destruiu '+allCards[victim.id].name+'!');}break;}
+ case'humanBless':{const allies=own.board.filter(x=>x!==u);if(allies.length){const target=allies.reduce((best,x)=>x.attack>best.attack?x:best,allies[0]);target.attack++;target.health+=2;target.maxHealth+=2;log(c.name+' fortaleceu '+allCards[target.id].name+' em +1/+2.');}break;}
+ case'humanBounce':{if(foe.board.length){const index=foe.board.reduce((best,x,i)=>x.attack>foe.board[best].attack?i:best,0);const returned=foe.board.splice(index,1)[0];if(foe.hand.length<10){foe.hand.push(returned.id);log(c.name+' devolveu '+allCards[returned.id].name+' à mão inimiga.');}else log(c.name+' removeu '+allCards[returned.id].name+' (mão inimiga cheia).');}break;}
+ case'humanCrystal':{for(const ally of own.board){if(['Mulher Escarlate','Mulher Esmeralda','Mulher Safira'].includes(allCards[ally.id]?.name)){ally.attack+=2;ally.health+=2;ally.maxHealth+=2;}}log(c.name+' ativou o poder dos Cristais!');break;}case'chainMenta':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Sonho de Menta')?.id);break;case'chainVermelhinha':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Vermelhinha')?.id);break;case'twin':if(own.board.length<7){const clone=makeUnit(c);clone.ready=false;own.board.push(clone);log(c.name+' invocou uma cópia!');}break;case'teamBuff':own.board.forEach(x=>{x.attack++;x.health++;x.maxHealth++;});log(c.name+' fortaleceu todos os Pães em campo com +1/+1!');break;case'ping':if(c.id==='bread12'){foe.health-=1;}else if(foe.board.length){const t=foe.board.slice().sort((a,b)=>a.health-b.health)[0];damageMinion(side==='player'?'enemy':'player',foe.board.indexOf(t),1);cleanup(side==='player'?'enemy':'player');}else foe.health-=1;break;}
 }
 function resolveSpell(side,c,target){
  const own=p(side),foe=p(side==='player'?'enemy':'player');
  switch(c.ability){
  case'heal':own.health=Math.min(30,own.health+3);toast('Seu herói recuperou 3 de vida.');break;
  case'draw2':draw(side);draw(side);break;
+ case'humanPoliceDraw':{let drawn=0;for(let i=0;i<2;i++){const indices=own.deck.map((id,j)=>allCards[id]?.name?.startsWith('Policial')?j:-1).filter(j=>j>=0);if(!indices.length)break;const j=rand(indices),id=own.deck.splice(j,1)[0];giveCard(side,id);drawn++;}log(c.name+' convocou '+drawn+' policial(is).');break;}
  case'revive':{const available=own.graveyard.filter(id=>allCards[id]?.kind==='unit');if(available.length){const id=rand(available);own.graveyard.splice(own.graveyard.indexOf(id),1);giveCard(side,id);}else log('Mãos de Padeiro: nenhum Pão derrotado para recuperar.');break;}
  case'teamBuff':own.board.forEach(u=>{u.attack++;u.health++;u.maxHealth++;});break;
  case'damage':if(target!==null)damageMinion(side==='player'?'enemy':'player',target,3);break;
@@ -155,13 +164,13 @@ function resolveSpell(side,c,target){
 }
 function damageMinion(side,i,n){const u=p(side).board[i];if(!u)return;u.health-=n;if(u.health<=0){log(`${allCards[u.id].name} foi derrotado.`);p(side).graveyard.push(u.id);p(side).board.splice(i,1);}else log(`${allCards[u.id].name} recebeu ${n} de dano.`);}
 function cleanup(side){const own=p(side);own.board.filter(u=>u.health<=0).forEach(u=>{own.graveyard.push(u.id);log(allCards[u.id].name+' foi derrotado.');});own.board=own.board.filter(u=>u.health>0);}
-function attackMinion(ai,ei){if(p('enemy').board.some(u=>u.taunt)&&!p('enemy').board[ei]?.taunt){toast('PROVOCAR: ataque a criatura que protege o campo!');return;}const atk=p('player').board[ai],def=p('enemy').board[ei];if(!atk||!def||!atk.ready)return;const attack=atk.attack;def.health-=attack;atk.health-=def.attack;applyPoison(atk,def,attack);applyPoison(def,atk,def.attack);atk.ready=false;log(`${allCards[atk.id].name} (${attack}) atacou ${allCards[def.id].name} (${def.attack}).`);if(def.health<=0)log(`${allCards[def.id].name} foi derrotado.`);if(atk.health<=0)log(`${allCards[atk.id].name} foi derrotado.`);cleanup('player');cleanup('enemy');}
-function attackHero(i){const u=p('player').board[i];if(!u||!u.ready||u.rushOnly)return;if(p('enemy').board.some(x=>x.taunt)){toast('Você precisa atacar uma criatura com Provocar.');return;}p('enemy').health-=u.attack;u.ready=false;log(`${allCards[u.id].name} atacou o herói adversário e causou ${u.attack} de dano.`);selectedAttacker=null;render();checkEnd();}
+function attackMinion(ai,ei){if(p('enemy').board.some(u=>u.taunt)&&!p('enemy').board[ei]?.taunt){toast('PROVOCAR: ataque a criatura que protege o campo!');return;}const atk=p('player').board[ai],def=p('enemy').board[ei];if(!atk||!def||!atk.ready)return;const attack=atk.attack;def.health-=attack;atk.health-=def.attack;applyPoison(atk,def,attack);applyPoison(def,atk,def.attack);onCombatKill('player',atk,def);onCombatKill('enemy',def,atk);spendAttack(atk);log(`${allCards[atk.id].name} (${attack}) atacou ${allCards[def.id].name} (${def.attack}).`);if(def.health<=0)log(`${allCards[def.id].name} foi derrotado.`);if(atk.health<=0)log(`${allCards[atk.id].name} foi derrotado.`);cleanup('player');cleanup('enemy');}
+function attackHero(i){const u=p('player').board[i];if(!u||!u.ready||u.rushOnly)return;if(p('enemy').board.some(x=>x.taunt)){toast('Você precisa atacar uma criatura com Provocar.');return;}p('enemy').health-=u.attack;spendAttack(u);log(`${allCards[u.id].name} atacou o herói adversário e causou ${u.attack} de dano.`);selectedAttacker=null;render();checkEnd();}
 function clickHero(side){if(side==='enemy'&&selectedAttacker!==null){if(p('enemy').board.some(u=>u.taunt)){toast('PROVOCAR: elimine as criaturas com Provocar antes do ataque direto.');return;}attackHero(selectedAttacker);return;}if(targetMode)toast('Essa carta precisa de um alvo no campo.');}
 $('player-hero').onclick=()=>clickHero('player');$('enemy-hero').onclick=()=>clickHero('enemy');
 function endTurn(){if(state.over||state.active!=='player'||aiBusy||window.TCGMotion?.busy)return;selectedCard=null;selectedAttacker=null;targetMode=null;state.active='enemy';setStatus(rivalName()+' está calculando suas jogadas...');render();setTimeout(aiTurn,500);}
 $('end-turn').onclick=endTurn;
-function beginTurn(side){const pl=p(side);pl.maxMana=Math.min(10,pl.maxMana+1);pl.mana=pl.maxMana;draw(side);pl.board.forEach(u=>{u.ready=true;u.rushOnly=false;});}
+function beginTurn(side){const pl=p(side);pl.maxMana=Math.min(10,pl.maxMana+1);pl.mana=pl.maxMana;draw(side);pl.board.forEach(u=>{u.attacksLeft=u.maxAttacks||1;u.ready=true;u.rushOnly=false;});}
 function aiTurn(){
  if(state.over)return;aiBusy=true;beginTurn('enemy');render();let safety=0;
  async function step(){
@@ -201,7 +210,7 @@ function chooseAIAction(){
  const me=p('enemy'),foe=p('player'),brain=aiPlan(),style=brain.style;
  const taunts=foe.board.map((u,i)=>({u,i})).filter(x=>x.u.taunt);
  const attackers=me.board.map((u,i)=>({u,i})).filter(x=>x.u.ready&&x.u.attack>0);
- const totalAttack=attackers.reduce((n,x)=>n+x.u.attack,0);
+ const totalAttack=attackers.reduce((n,x)=>n+x.u.attack*Math.max(1,x.u.attacksLeft||1),0);
  const mana=me.mana;
  // State 1: immediate lethal, including taunt clearance if possible.
  brain.phase='lethal';
@@ -245,6 +254,13 @@ function chooseAIAction(){
    if(c.ability==='chainMenta'||c.ability==='chainVermelhinha')score+=me.hand.length<=7?4:0;
    if(c.ability==='poison'&&foe.board.some(u=>u.health>=4))score+=5;
    if(['charge','rush'].includes(c.ability)&&foe.board.length)score+=3;
+   if(c.ability==='doubleAttack')score+=3;
+   if(c.ability==='humanTokens'&&foe.board.length)score+=4;
+   if(c.ability==='humanHeal3'&&me.health<27)score+=4;
+   if(c.ability==='humanDestroy'&&foe.board.length)score+=Math.max(3,...foe.board.map(aiThreat))*.85;
+   if(c.ability==='humanBounce'&&foe.board.length)score+=5;
+   if(c.ability==='humanCrystal'&&me.board.some(u=>['Mulher Escarlate','Mulher Esmeralda','Mulher Safira'].includes(allCards[u.id]?.name)))score+=6;
+   if(c.ability==='humanBless'&&boardCount>=1)score+=3;
    if(c.ability==='guard'&&foe.board.length)score+=3;
    if(boardCount>=4)score-=3+(boardCount-4)*2;
    if(boardCount>=enemyCount+2)score-=2;
@@ -263,6 +279,7 @@ function chooseAIAction(){
    if(c.ability==='chargebuff'&&me.board.some(u=>!u.ready)){const target=me.board.findIndex(u=>!u.ready);actions.push({type:'spell',i,target,score:5+(foe.board.length?4:0)});}
    if(c.ability==='poisonbuff'&&me.board.some(u=>!u.poison)){const target=me.board.findIndex(u=>!u.poison);actions.push({type:'spell',i,target,score:4+(foe.board.length?4:0)});}
    if(c.ability==='draw2'&&me.hand.length<=6&&me.deck.length>=2)actions.push({type:'spell',i,score:6});
+   if(c.ability==='humanPoliceDraw'&&me.hand.length<=7&&me.deck.some(id=>allCards[id]?.name?.startsWith('Policial')))actions.push({type:'spell',i,score:7});
    if(c.ability==='revive'&&me.graveyard.length&&me.hand.length<8)actions.push({type:'spell',i,score:6});
    if(c.ability==='teamBuff'&&me.board.length>=2)actions.push({type:'spell',i,score:me.board.length*2.8});
    if(c.ability==='shield'&&me.board.some(u=>!u.taunt)){
@@ -293,9 +310,9 @@ function chooseAIAction(){
 }
 function executeAI(a){const me=p('enemy'),foe=p('player');
  if(a.type==='unit'){const id=me.hand.splice(a.i,1)[0],c=allCards[id];me.mana-=c.cost;const u=makeUnit(c);me.board.push(u);triggerBattlecry('enemy',u,c);log(`${rivalName()} invocou ${c.name} (${u.attack}/${u.health}).`);state.lastAction='“'+aiBrain.style.name+': consolidando a estratégia.”';}
- if(a.type==='spell'){const id=me.hand[a.i],c=allCards[id];me.hand.splice(a.i,1);me.mana-=c.cost;if(c.ability==='damage'&&a.target!==undefined){damageMinion('player',a.target,3);}else if(c.ability==='buff'||c.ability==='shield'||c.ability==='poisonbuff'||c.ability==='chargebuff'){const u=me.board[a.target]||me.board[0];if(u){if(c.ability==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;}else if(c.ability==='poisonbuff'){u.poison=true;}else if(c.ability==='chargebuff'){u.ready=true;u.rushOnly=true;}else{u.taunt=true;u.health+=3;u.maxHealth+=3;}}}else resolveSpell('enemy',c,null);log(`${rivalName()} usou ${c.name}.`);state.lastAction='“Recursos utilizados com eficiência.”';}
- if(a.type==='attack'){const at=me.board[a.i],de=foe.board[a.target];if(at&&at.ready&&de&&(!foe.board.some(u=>u.taunt)||de.taunt)){de.health-=at.attack;at.health-=de.attack;applyPoison(at,de,at.attack);applyPoison(de,at,de.attack);at.ready=false;log(`${allCards[at.id].name} de ${rivalName()} atacou ${allCards[de.id].name}.`);cleanup('player');cleanup('enemy');}}
- if(a.type==='face'){const at=me.board[a.i];if(at&&at.ready&&!at.rushOnly&&!foe.board.some(u=>u.taunt)){foe.health-=at.attack;at.ready=false;log(`${rivalName()} atacou seu herói com ${allCards[at.id].name}, causando ${at.attack} de dano.`);}}
+ if(a.type==='spell'){const id=me.hand[a.i],c=allCards[id];me.hand.splice(a.i,1);me.mana-=c.cost;if(c.ability==='damage'&&a.target!==undefined){damageMinion('player',a.target,3);}else if(c.ability==='buff'||c.ability==='shield'||c.ability==='poisonbuff'||c.ability==='chargebuff'){const u=me.board[a.target]||me.board[0];if(u){if(c.ability==='buff'){u.attack+=2;u.health+=2;u.maxHealth+=2;}else if(c.ability==='poisonbuff'){u.poison=true;}else if(c.ability==='chargebuff'){u.ready=true;u.rushOnly=true;u.attacksLeft=Math.max(1,u.attacksLeft||0);}else{u.taunt=true;u.health+=3;u.maxHealth+=3;}}}else resolveSpell('enemy',c,null);log(`${rivalName()} usou ${c.name}.`);state.lastAction='“Recursos utilizados com eficiência.”';}
+ if(a.type==='attack'){const at=me.board[a.i],de=foe.board[a.target];if(at&&at.ready&&de&&(!foe.board.some(u=>u.taunt)||de.taunt)){de.health-=at.attack;at.health-=de.attack;applyPoison(at,de,at.attack);applyPoison(de,at,de.attack);onCombatKill('enemy',at,de);onCombatKill('player',de,at);spendAttack(at);log(`${allCards[at.id].name} de ${rivalName()} atacou ${allCards[de.id].name}.`);cleanup('player');cleanup('enemy');}}
+ if(a.type==='face'){const at=me.board[a.i];if(at&&at.ready&&!at.rushOnly&&!foe.board.some(u=>u.taunt)){foe.health-=at.attack;spendAttack(at);log(`${rivalName()} atacou seu herói com ${allCards[at.id].name}, causando ${at.attack} de dano.`);}}
  checkEnd();
 }
 function checkEnd(){if(state.over)return;if(p('player').health<=0||p('enemy').health<=0){state.over=true;const win=p('enemy').health<=0; $('modal-symbol').textContent=win?'🏆':'👽';$('modal-title').textContent=win?'VITÓRIA!':'DERROTA!';$('modal-text').textContent=win?'Você venceu o duelo contra '+(window.TCGMenu?.name(window.TCGMenu?.match.enemy)||'a CPU')+'!':'A CPU venceu o duelo. Experimente outra estratégia ou um novo confronto.';$('modal').classList.remove('hidden');render();}}

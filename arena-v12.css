@@ -1,0 +1,16 @@
+/* v1.2: three selectable factions and the Human portrait. */
+@media(min-width:780px){
+ .menu-character-grid{max-width:1060px;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+ .menu-select-screen{width:min(96vw,1160px)}
+ .menu-character{min-height:306px}
+ .menu-character-icon{font-size:76px}
+}
+@media(min-width:560px) and (max-width:779px){
+ .menu-character-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+ .menu-character{min-height:290px}
+ .menu-character-icon{font-size:58px}
+ .menu-character strong{font-size:23px}
+}
+.hero-portrait.human-portrait{background:radial-gradient(circle at 30% 20%,#a3d5ff,#2e5b87 65%,#13273f);border-color:#83c5ff;color:#f4faff;text-shadow:0 2px 12px #fff7}
+.menu-character[data-pick="human"]{background:linear-gradient(160deg,#284c66,#101d31)}
+.menu-character[data-pick="human"].chosen{box-shadow:0 0 0 3px #ffffff44,0 0 32px #8fc6ff,0 16px 26px #0009}

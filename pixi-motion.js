@@ -27,6 +27,7 @@ function banner(name,detail=''){
   noticeActive=true;
   while(notices.length){
    const msg=notices.shift(),el=document.createElement('div');el.className='tcg-banner';
+   window.TCGAudio?.play('notification',200);
    const title=document.createElement('strong');title.textContent=msg.name;
    const sub=document.createElement('small');sub.textContent=msg.detail;el.append(title,sub);overlay.appendChild(el);
    await sleep(70);el.classList.add('visible');
@@ -80,6 +81,7 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
   if(fallback){fallback.style.left=(a.x+(b.x-a.x)*t)+'px';fallback.style.top=(a.y+(b.y-a.y)*t+arc)+'px';fallback.style.transform='translate(-50%,-50%) scale('+(1+Math.sin(Math.PI*t)*.3)+')';}
   if(line){line.clear();line.lineStyle(4,0xffd780,.6);line.moveTo(a.x,a.y);line.lineTo(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t+arc);}
  });
+ window.TCGAudio?.play('attack');
  burst(b,0xff6748,75);setTimeout(()=>burst(b,0xffd68c,30),200);num(dstEl,damage);if(returnDamage){burst(a,0x64ccff,16);num(srcEl,returnDamage);}
  if(dstEl){dstEl.classList.remove('tcg-impact');void dstEl.offsetWidth;dstEl.classList.add('tcg-impact');setTimeout(()=>dstEl.classList.remove('tcg-impact'),900);}
  await sleep(700);
@@ -91,6 +93,7 @@ async function travel(srcEl,dstEl,srcUrl,damage,returnDamage=0){
 }
 function summon(target,srcUrl,origin,special=false){
  const pos=point(target);if(!pos)return;
+ window.TCGAudio?.play(target?.classList.contains('tcg-taunt')||target?.querySelector('.taunt')?.textContent.includes('PROVOCAR')?'guard':'summon');
  if(target?.dataset?.cardName==='O Santo Grão'){
   target.classList.remove('tcg-soft-arrival','tcg-guard-drop','tcg-rainbow-arrival');
   target.classList.add('tcg-holy-arrival');
@@ -121,6 +124,7 @@ async function aiAction(choice){
    const cost=document.createElement('small');cost.textContent=spell.cost+' MANA · FEITIÇO DE '+rivalName().toUpperCase();
    const description=document.createElement('p');description.textContent=spell.description||'Feitiço do adversário';
    preview.append(image,name,cost,description);
+   window.TCGAudio?.play('spell');
   }
   await sleep(4000);
   executeAI(choice);render();
@@ -149,6 +153,7 @@ playCard=function(i){
  if(busy)return;
  const c=allCards[p('player').hand[i]],src=document.querySelectorAll('#hand .card')[i],origin=point(src),before=p('player').board.length;
  originalPlay.apply(this,arguments);
+ if(c?.kind==='spell'&&!p('player').hand.includes(c.id)){window.TCGAudio?.play('spell');}
  if(c?.kind==='spell'&&p('player').hand.length!==undefined){const buff=['buff','shield','poisonbuff','chargebuff','teamBuff'].includes(c.ability);if(buff)document.querySelectorAll('#player-board .minion').forEach(el=>{el.classList.add('tcg-enchanted');setTimeout(()=>el.classList.remove('tcg-enchanted'),1200);});}
  if(c?.kind==='unit'&&p('player').board.length>before){
   const special=['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(c.name);
@@ -174,7 +179,7 @@ attackHero=function(i){
  if(p('enemy').board.some(u=>u.taunt)){toast('PROVOCAR: ataque primeiro a criatura com Provocar!');return;}
  const src=unit('player',i),dst=hero('enemy'),art=allCards[a.id].art,damage=a.attack;
  busy=true;aiBusy=true;selectedAttacker=null;
- banner('ATAQUE DIRETO!',allCards[a.id].name+' → ZORK');
+ banner('ATAQUE DIRETO!',allCards[a.id].name+' → '+rivalName().toUpperCase());
  (async()=>{await sleep(250);await travel(src,dst,art,damage);originalHero(i);busy=false;aiBusy=false;render();})().catch(e=>{console.error(e);busy=false;aiBusy=false;render();});
 };
 function dragBegin(e){

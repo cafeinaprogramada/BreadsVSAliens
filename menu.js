@@ -2,9 +2,10 @@
 (function(){
  const CHARACTERS={
   bread:{id:'bread',name:'Tenente dos Pães',deck:'Baralho dos Pães',emoji:'🥖',side:'Resistência da Padaria',color:'#f5c765',description:'Coragem, sinergia e pão quentinho.',tag:'RESISTÊNCIA'},
-  alien:{id:'alien',name:'Comandante Zork',deck:'Baralho Alienígena',emoji:'👽',side:'Invasores da Nebulosa',color:'#7be7a5',description:'Tecnologia, estratégia e invasão.',tag:'INVASÃO'}
+  alien:{id:'alien',name:'Comandante Zork',deck:'Baralho Alienígena',emoji:'👽',side:'Invasores da Nebulosa',color:'#7be7a5',description:'Tecnologia, estratégia e invasão.',tag:'INVASÃO'},
+  human:{id:'human',name:'Capitão dos Humanos',deck:'Baralho dos Humanos',emoji:'🛡️',side:'Defensores da Terra',color:'#8fc6ff',description:'Policiais, cristais, capoeira e reforços.',tag:'HUMANIDADE'}
  };
- const order=['bread','alien'];
+ const order=['bread','alien','human'];
  const match={player:'bread',enemy:'alien'};
  let stage='title',picked=null,locked=false;
  const root=()=>document.getElementById('menu-root');
@@ -12,7 +13,7 @@
  const name=id=>CHARACTERS[id]?.name||id;
  function character(id){return CHARACTERS[id]||CHARACTERS.bread;}
  function card(id,selected){
-  const c=character(id),count=(window.CARD_DATA?.cards||[]).filter(x=>x.faction===id).length;
+  const c=character(id),count=(window.CARD_DATA?.cards||[]).filter(x=>x.faction===id&&!x.token).length;
   return '<button class="menu-character'+(selected===id?' chosen':'')+'" data-pick="'+id+'" style="--character-color:'+c.color+'"><span class="menu-character-icon">'+c.emoji+'</span><span class="menu-character-tag">'+c.tag+'</span><strong>'+c.name+'</strong><span class="menu-character-deck">'+c.deck+'</span><span class="menu-character-description">'+c.description+'</span><span class="menu-character-count">'+count+' tipos de carta · deck aleatório de 40</span></button>';
  }
  function setStage(next){
@@ -46,7 +47,7 @@
    const title=hero.querySelector('.hero-info b'),subtitle=hero.querySelector('.hero-info span'),portrait=hero.querySelector('.hero-portrait');
    if(title)title.textContent=(side==='player'?'VOCÊ · ':'CPU · ')+c.name.toUpperCase();
    if(subtitle)subtitle.textContent=c.side;
-   if(portrait){portrait.textContent=c.emoji;portrait.classList.toggle('bread-portrait',c.id==='bread');portrait.classList.toggle('alien-portrait',c.id==='alien');}
+   if(portrait){portrait.textContent=c.emoji;portrait.classList.toggle('bread-portrait',c.id==='bread');portrait.classList.toggle('alien-portrait',c.id==='alien');portrait.classList.toggle('human-portrait',c.id==='human');}
   }
   const enemyLabel=document.querySelector('.battlefield .lane-label:not(.player-lane) span:first-child');
   const playerLabel=document.querySelector('.battlefield .player-lane span:first-child');

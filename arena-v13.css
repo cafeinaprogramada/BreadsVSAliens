@@ -1,0 +1,6 @@
+/* Audio volume is available only on the arcade title screen. */
+.menu-volume{margin:20px auto 0;width:min(340px,88vw);padding:13px 18px;background:#071824bb;border:2px solid #7791a677;border-radius:14px;box-shadow:0 6px 22px #0005}
+.menu-volume label{display:block;font:900 11px Inter,sans-serif;letter-spacing:1.8px;color:#ffdf99;margin-bottom:10px}
+.menu-volume-row{display:flex;align-items:center;gap:14px}
+.menu-volume-row input{flex:1;min-width:0;accent-color:#ffd06a;cursor:pointer}
+.menu-volume-row output{width:43px;text-align:right;font:800 13px Inter,sans-serif;color:#fff}

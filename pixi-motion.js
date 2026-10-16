@@ -151,9 +151,9 @@ hideInspect=function(){if(enemyPreviewLock)return;return originalHideInspect.app
 const originalPlay=playCard;
 playCard=function(i){
  if(busy)return;
- const c=allCards[p('player').hand[i]],src=document.querySelectorAll('#hand .card')[i],origin=point(src),before=p('player').board.length;
+ const c=allCards[p('player').hand[i]],src=document.querySelectorAll('#hand .card')[i],origin=point(src),before=p('player').board.length,manaBefore=p('player').mana;
  originalPlay.apply(this,arguments);
- if(c?.kind==='spell'&&!p('player').hand.includes(c.id)){window.TCGAudio?.play('spell');}
+ if(c?.kind==='spell'&&p('player').mana<manaBefore){window.TCGAudio?.play('spell');}
  if(c?.kind==='spell'&&p('player').hand.length!==undefined){const buff=['buff','shield','poisonbuff','chargebuff','teamBuff'].includes(c.ability);if(buff)document.querySelectorAll('#player-board .minion').forEach(el=>{el.classList.add('tcg-enchanted');setTimeout(()=>el.classList.remove('tcg-enchanted'),1200);});}
  if(c?.kind==='unit'&&p('player').board.length>before){
   const special=['Sonho de Blueberry','Sonho de Menta','Vermelhinha'].includes(c.name);

@@ -94,7 +94,7 @@ function inspectCard(c,u,source){
   const desc=document.createElement('p');desc.textContent=c.description||'Sem efeito especial.';
   const stats=document.createElement('small');stats.textContent=c.cost+' MANA · '+(c.kind==='spell'?'FEITIÇO':(u?u.attack:c.attack)+' ATQ / '+(u?u.health:c.health)+' VIDA');
   const trait=document.createElement('em');
-  const traits={chargebuff:'CONCEDE INVESTIDA',guard:'PROVOCAR',poison:'TOQUE VENENOSO',rush:'INVESTIDA',charge:'ATAQUE IMEDIATO',twin:'CÓPIA AO INVOCAR',draw:'COMPRA DE CARTA',revive:'RESSURREIÇÃO',shield:'ESCUDO'};
+  const traits={doubleAttack:'ATAQUE DUPLO',humanTokens:'INVOCA TOKENS',humanHeal3:'CURA +3',humanDestroy:'DESTRUIÇÃO',humanBless:'FORTALECIMENTO',humanBounce:'DEVOLVER À MÃO',humanCrystal:'SINERGIA DE CRISTAIS',humanPoliceDraw:'REFORÇOS POLICIAIS',chargebuff:'CONCEDE INVESTIDA',guard:'PROVOCAR',poison:'TOQUE VENENOSO',rush:'INVESTIDA',charge:'ATAQUE IMEDIATO',twin:'CÓPIA AO INVOCAR',draw:'COMPRA DE CARTA',revive:'RESSURREIÇÃO',shield:'ESCUDO'};
   const label=(u?.poison?'TOQUE VENENOSO':u?.taunt?'PROVOCAR':traits[c.ability])||'';
   trait.textContent=label;trait.hidden=!label;
   preview.append(img,name,stats,trait,desc);
@@ -142,12 +142,12 @@ function giveCard(side,id){const own=p(side);if(!allCards[id])return;if(own.hand
 function applyPoison(attacker,defender,damage){if(attacker?.poison&&damage>0&&defender)defender.health=0;}
 function triggerBattlecry(side,u,c){
  const own=p(side),foe=p(side==='player'?'enemy':'player');
- switch(c.ability){case'heal':{const healed=Math.min(2,30-own.health);own.health+=healed;if(healed)log(c.name+' restaurou '+healed+' de vida ao '+(side==='enemy'?rivalName():'seu herói')+'.');break;}case'healall':own.health=Math.min(30,own.health+3);own.board.forEach(x=>{x.health=Math.min(x.maxHealth,x.health+3)});break;case'healminion':{const hurt=own.board.filter(x=>x!==u&&x.health<x.maxHealth);if(hurt.length){const t=hurt.sort((a,b)=>(a.health/a.maxHealth)-(b.health/b.maxHealth))[0];t.health=Math.min(t.maxHealth,t.health+2);}else{own.health=Math.min(30,own.health+2);log(c.name+' restaurou 2 de vida do herói de '+rivalName()+'.');}break;}case'draw':draw(side);break;
+ switch(c.ability){case'heal':{const healed=Math.min(2,30-own.health);own.health+=healed;if(healed)log(c.name+' restaurou '+healed+' de vida ao '+(side==='enemy'?rivalName():'seu herói')+'.');break;}case'healall':own.health=Math.min(30,own.health+3);own.board.forEach(x=>{x.health=Math.min(x.maxHealth,x.health+3)});break;case'healminion':{const hurt=own.board.filter(x=>x!==u&&x.health<x.maxHealth);if(hurt.length){const t=hurt.sort((a,b)=>(a.health/a.maxHealth)-(b.health/b.maxHealth))[0];t.health=Math.min(t.maxHealth,t.health+2);}else{own.health=Math.min(30,own.health+2);log(c.name+' restaurou 2 de vida do herói aliado.');}break;}case'draw':draw(side);break;
  case'humanHeal3':{const healed=Math.min(3,30-own.health);own.health+=healed;if(healed)log(c.name+' restaurou '+healed+' de vida do herói.');break;}
  case'humanDestroy':{if(foe.board.length){const target=foe.board.reduce((best,u,i)=>u.attack>foe.board[best].attack?i:best,0);const victim=foe.board[target];foe.graveyard.push(victim.id);foe.board.splice(target,1);log(c.name+' destruiu '+allCards[victim.id].name+'!');}break;}
  case'humanBless':{const allies=own.board.filter(x=>x!==u);if(allies.length){const target=allies.reduce((best,x)=>x.attack>best.attack?x:best,allies[0]);target.attack++;target.health+=2;target.maxHealth+=2;log(c.name+' fortaleceu '+allCards[target.id].name+' em +1/+2.');}break;}
  case'humanBounce':{if(foe.board.length){const index=foe.board.reduce((best,x,i)=>x.attack>foe.board[best].attack?i:best,0);const returned=foe.board.splice(index,1)[0];if(foe.hand.length<10){foe.hand.push(returned.id);log(c.name+' devolveu '+allCards[returned.id].name+' à mão inimiga.');}else log(c.name+' removeu '+allCards[returned.id].name+' (mão inimiga cheia).');}break;}
- case'humanCrystal':{for(const ally of own.board){if(['Mulher Escarlate','Mulher Esmeralda','Mulher Safira'].includes(allCards[ally.id]?.name)){ally.attack+=2;ally.health+=2;ally.maxHealth+=2;}}log(c.name+' ativou o poder dos Cristais!');break;}case'chainMenta':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Sonho de Menta')?.id);break;case'chainVermelhinha':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Vermelhinha')?.id);break;case'twin':if(own.board.length<7){const clone=makeUnit(c);clone.ready=false;own.board.push(clone);log(c.name+' invocou uma cópia!');}break;case'teamBuff':own.board.forEach(x=>{x.attack++;x.health++;x.maxHealth++;});log(c.name+' fortaleceu todos os Pães em campo com +1/+1!');break;case'ping':if(c.id==='bread12'){foe.health-=1;}else if(foe.board.length){const t=foe.board.slice().sort((a,b)=>a.health-b.health)[0];damageMinion(side==='player'?'enemy':'player',foe.board.indexOf(t),1);cleanup(side==='player'?'enemy':'player');}else foe.health-=1;break;}
+ case'humanCrystal':{for(const ally of own.board){if(['Mulher Escarlate','Mulher Esmeralda','Mulher Safira'].includes(allCards[ally.id]?.name)){ally.attack+=2;ally.health+=2;ally.maxHealth+=2;}}log(c.name+' ativou o poder dos Cristais!');break;}case'chainMenta':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Sonho de Menta')?.id);break;case'chainVermelhinha':giveCard(side,window.CARD_DATA.cards.find(x=>x.name==='Vermelhinha')?.id);break;case'twin':if(own.board.length<7){const clone=makeUnit(c);clone.ready=false;own.board.push(clone);log(c.name+' invocou uma cópia!');}break;case'teamBuff':own.board.forEach(x=>{x.attack++;x.health++;x.maxHealth++;});log(c.name+' fortaleceu todas as criaturas aliadas em campo com +1/+1!');break;case'ping':if(c.id==='bread12'){foe.health-=1;}else if(foe.board.length){const t=foe.board.slice().sort((a,b)=>a.health-b.health)[0];damageMinion(side==='player'?'enemy':'player',foe.board.indexOf(t),1);cleanup(side==='player'?'enemy':'player');}else foe.health-=1;break;}
 }
 function resolveSpell(side,c,target){
  const own=p(side),foe=p(side==='player'?'enemy':'player');
@@ -258,7 +258,9 @@ function chooseAIAction(){
    if(c.ability==='humanTokens'&&foe.board.length)score+=4;
    if(c.ability==='humanHeal3'&&me.health<27)score+=4;
    if(c.ability==='humanDestroy'&&foe.board.length)score+=Math.max(3,...foe.board.map(aiThreat))*.85;
+   if(c.ability==='humanDestroy'&&!foe.board.length)score-=5;
    if(c.ability==='humanBounce'&&foe.board.length)score+=5;
+   if(c.ability==='humanBounce'&&!foe.board.length)score-=4;
    if(c.ability==='humanCrystal'&&me.board.some(u=>['Mulher Escarlate','Mulher Esmeralda','Mulher Safira'].includes(allCards[u.id]?.name)))score+=6;
    if(c.ability==='humanBless'&&boardCount>=1)score+=3;
    if(c.ability==='guard'&&foe.board.length)score+=3;

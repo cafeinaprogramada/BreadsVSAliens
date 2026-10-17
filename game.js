@@ -38,6 +38,7 @@ function buildDeck(faction){
 }
 function boot(){const data=window.CARD_DATA;allCards=Object.fromEntries(data.cards.map(c=>[c.id,c]));window.deckData=data.decks;if(window.TCGMenu)window.TCGMenu.show();else startGame();}
 function startGame(){
+ window.TCGAudio?.startMusic();
  if(typeof hideInspect==='function')hideInspect();
  const match=window.TCGMenu?.match||{player:'bread',enemy:'alien'};
  const playerFaction=match.player||'bread',enemyFaction=match.enemy||'alien';
@@ -317,7 +318,7 @@ function executeAI(a){const me=p('enemy'),foe=p('player');
  if(a.type==='face'){const at=me.board[a.i];if(at&&at.ready&&!at.rushOnly&&!foe.board.some(u=>u.taunt)){foe.health-=at.attack;spendAttack(at);log(`${rivalName()} atacou seu herói com ${allCards[at.id].name}, causando ${at.attack} de dano.`);}}
  checkEnd();
 }
-function checkEnd(){if(state.over)return;if(p('player').health<=0||p('enemy').health<=0){state.over=true;const win=p('enemy').health<=0; $('modal-symbol').textContent=win?'🏆':'👽';$('modal-title').textContent=win?'VITÓRIA!':'DERROTA!';$('modal-text').textContent=win?'Você venceu o duelo contra '+(window.TCGMenu?.name(window.TCGMenu?.match.enemy)||'a CPU')+'!':'A CPU venceu o duelo. Experimente outra estratégia ou um novo confronto.';$('modal').classList.remove('hidden');render();}}
+function checkEnd(){if(state.over)return;if(p('player').health<=0||p('enemy').health<=0){state.over=true;window.TCGAudio?.stopMusic();const win=p('enemy').health<=0; $('modal-symbol').textContent=win?'🏆':'👽';$('modal-title').textContent=win?'VITÓRIA!':'DERROTA!';$('modal-text').textContent=win?'Você venceu o duelo contra '+(window.TCGMenu?.name(window.TCGMenu?.match.enemy)||'a CPU')+'!':'A CPU venceu o duelo. Experimente outra estratégia ou um novo confronto.';$('modal').classList.remove('hidden');render();}}
 $('restart').onclick=startGame;$('modal-restart').onclick=()=>{$('modal').classList.add('hidden');startGame();};
 $('modal-home').onclick=()=>{$('modal').classList.add('hidden');window.TCGMenu?.open();};
 $('log-toggle').onclick=()=>$('log').classList.toggle('open');

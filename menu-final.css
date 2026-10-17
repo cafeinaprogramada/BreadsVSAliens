@@ -1,0 +1,72 @@
+/* Pães vs Aliens — final menu and onboarding */
+#menu-root.menu-is-title{
+ background:#07131d url("assets/Tela%20de%20Titulo.png") center center / cover no-repeat;
+}
+#menu-root.menu-is-title::before{
+ background:linear-gradient(180deg,rgba(4,10,20,.24),rgba(4,10,20,.12) 44%,rgba(4,10,20,.63));
+ opacity:1;
+}
+#menu-root.menu-is-title .menu-stars{z-index:0}
+#menu-root.menu-is-title .menu-title-screen{z-index:1;padding-bottom:74px}
+.menu-title-actions{display:flex;flex-direction:column;align-items:center;gap:13px;margin-top:16px}
+.menu-title-actions .menu-play{min-width:252px}
+.menu-title-actions .menu-secondary{width:min(252px,85vw);padding:12px 22px;letter-spacing:1px;background:#112a3ddc;border-color:#8aafc2;box-shadow:0 5px 16px #0008;transition:transform .2s,background .2s}
+.menu-title-actions .menu-secondary:hover{transform:translateY(-3px);background:#2a4c61}
+.menu-title-footer{position:fixed;bottom:0;left:0;right:0;z-index:3;display:flex;justify-content:space-between;align-items:end;gap:16px;padding:14px clamp(18px,3vw,48px);pointer-events:none;font-size:12px;font-weight:800;color:#e5e8e9;text-shadow:0 2px 5px #000;letter-spacing:.5px}
+.menu-title-footer>*{pointer-events:auto}
+.menu-comic-link{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:11px 18px;color:#35251a;text-decoration:none;background:linear-gradient(#ffeb95,#eab74b);border:2px solid #fff2ad;border-radius:11px;box-shadow:0 4px #a45f30,0 7px 15px #0009;font:900 15px 'Barlow Condensed',Impact,sans-serif;letter-spacing:1px;transition:transform .2s,filter .2s}
+.menu-comic-link:hover{transform:translateY(-3px);filter:brightness(1.12)}
+.menu-dialog-screen{position:relative;z-index:1;width:min(94vw,690px);margin:22px auto;padding:clamp(20px,3vw,32px);border:2px solid #7593a7;border-radius:20px;background:linear-gradient(155deg,#263d4ef7,#101d2bf9);box-shadow:0 18px 80px #000b, inset 0 1px #ffffff30;text-align:center;animation:menu-enter .38s ease both}
+.menu-dialog-kicker{font-size:11px;font-weight:900;letter-spacing:2.5px;color:#ffda80}
+.menu-dialog-screen h2{font:900 clamp(32px,5vw,52px)/1 'Barlow Condensed',Impact,sans-serif;letter-spacing:1.5px;color:#ffe4a4;margin:12px 0}
+.menu-dialog-intro{color:#c4d5e1;font-size:14px;line-height:1.6}
+.menu-audio-panel{display:flex;flex-direction:column;gap:9px;max-width:450px;margin:26px auto;padding:20px;border:1px solid #5c7a8b;border-radius:14px;background:#091622a8;text-align:left}
+.menu-audio-panel label{display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:13px;color:#ffdd91;margin-top:10px;letter-spacing:.4px}
+.menu-audio-panel output{color:#fff;font-variant-numeric:tabular-nums}
+.menu-audio-panel input{width:100%;accent-color:#ffca66;cursor:pointer}
+.menu-audio-panel small{color:#a7c3d1;font-size:11px;margin-bottom:14px}
+.menu-dialog-back{margin-top:14px}
+.menu-tutorial-screen{width:min(95vw,800px);max-height:calc(100dvh - 38px);overflow-y:auto;text-align:left;scrollbar-color:#698699 #142532}
+.menu-tutorial-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.menu-page-count{font-weight:900;color:#ffe2a2;font-size:13px}
+.menu-lesson{padding:clamp(12px,2.3vw,22px);border-radius:15px;background:#0b1a28c9;border:1px solid #476a80}
+.menu-lesson-heading{display:flex;align-items:center;gap:14px}
+.menu-lesson-icon{font-size:clamp(32px,5vw,48px);filter:drop-shadow(0 3px 8px #0008)}
+.menu-lesson-heading small{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#8bd5eb}
+.menu-lesson-heading h3{font:900 clamp(25px,4vw,37px)/1.15 'Barlow Condensed',Impact,sans-serif;color:#ffdc8d;margin:3px 0}
+.menu-lesson>p{color:#d3e2e9;font-size:13px;line-height:1.55}
+.menu-lesson-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}
+.menu-lesson-item{display:flex;align-items:flex-start;gap:10px;padding:12px;background:#223b4b;border:1px solid #4e6e81;border-radius:10px}
+.menu-lesson-item>span{font-size:25px;flex:none}
+.menu-lesson-item strong{display:block;color:#ffe0a0;font-size:13px}
+.menu-lesson-item p{font-size:12px;line-height:1.5;color:#d3e0e7;margin:5px 0 0}
+.menu-tutorial-pagination{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px}
+.menu-tutorial-pagination .menu-play{font-size:15px;padding:10px 16px;box-shadow:0 4px #ad6634}
+.menu-tutorial-pagination .menu-secondary{font-size:12px;padding:10px 14px}
+.menu-tutorial-pagination .menu-secondary:disabled{opacity:.35;cursor:not-allowed}
+.menu-page-dots{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
+.menu-page-dots button{width:11px;height:11px;padding:0;border:1px solid #a8b9c3;border-radius:50%;background:#405768;cursor:pointer;transition:transform .2s,background .2s}
+.menu-page-dots button.active{background:#ffcf68;border-color:#fff0ba;transform:scale(1.2)}
+.menu-tutorial-screen>.menu-dialog-back{display:block;margin:18px auto 0}
+#menu-root.menu-transition .menu-dialog-screen{animation:menu-leave .36s ease-in forwards}
+.modal-actions .menu-comic-link{font-size:13px;padding:10px 14px;min-height:39px}
+@media(max-width:620px){
+ .menu-lesson-items{grid-template-columns:1fr}
+ .menu-tutorial-pagination{flex-wrap:wrap}
+ .menu-page-dots{order:3;width:100%;padding-top:6px}
+ .menu-title-footer{font-size:10px;padding:10px}
+ .menu-comic-link{font-size:12px;padding:8px 10px;min-height:35px}
+}
+@media(max-height:650px){
+ .menu-title-screen{padding-top:12px}
+ .menu-emblem{font-size:clamp(45px,10vh,100px)}
+ .menu-title-screen h1{font-size:clamp(48px,12vh,100px);margin:8px 0}
+ .menu-subtitle{margin:8px auto 15px}
+ .menu-title-actions{gap:8px}
+ .menu-title-actions .menu-play{padding:9px 35px;font-size:20px}
+ .menu-title-actions .menu-secondary{padding:8px 18px}
+ .menu-credit{margin-top:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .menu-stars,.menu-emblem,.menu-title-screen,.menu-select-screen,.menu-dialog-screen{animation:none!important}
+}

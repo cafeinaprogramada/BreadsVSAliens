@@ -30,10 +30,9 @@ function banner(name,detail=''){
    window.TCGAudio?.play('notification',200);
    const title=document.createElement('strong');title.textContent=msg.name;
    const sub=document.createElement('small');sub.textContent=msg.detail;el.append(title,sub);overlay.appendChild(el);
-   await sleep(70);el.classList.add('visible');
-   await sleep(3500);el.classList.remove('visible');
-   await sleep(650);el.remove();
-   await sleep(180);
+   el.classList.add('visible');
+   await sleep(2650);el.classList.remove('visible');
+   await sleep(350);el.remove();
   }
   noticeActive=false;
  })().catch(e=>{console.error(e);noticeActive=false;});
